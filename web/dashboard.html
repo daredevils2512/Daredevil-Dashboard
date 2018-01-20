@@ -18,14 +18,23 @@
 
   <body>
     <nav class="navbar navbar-dark sticky-top flex-md-nowrap p-0">
-      <a class="navbar-brand col-sm-3 col-md-2 mr-0" href="#">Daredevil Dashboard</a>
+      <div class="navbar-brand col-sm-3 col-md-2 mr-0">
+      	<span style="color:white">
+      		Daredevil Dashboard 
+      		<span class="dashboard-buttons">
+      			<a href="javascript:void(0)" onclick="startDebugPatterns(); $(this).addClass('disabled');" data-toggle="tooltip" data-placement="bottom" title="Start Recording"><span data-feather="plus-circle" style="color:white"></span></a>
+      			<a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Abort Recording"><span data-feather="x-square" style="color:white"></span></a>
+      			<a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Save Recording"><span data-feather="save" style="color:white"></span></a>
+      		</span>
+      	</span> 
+      </div>
       <!--input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"-->
       <div class="w-100 nav-item">
       	<center>
       		<span id="quote">
       			<h3 id="quote-text" style="display:inline-block;">
       			WHEN YOU HAVE COPD IT CAN BE HARD TO BREATHE
-      			</h3> <i>- <span class="quote-source">grandpa wolf</span></i>
+      			</h3> <i>- <span id="quote-source">grandpa wolf</span></i>
       		</span>
       		<span id="matchHeader" style="display: none">
       			<h3 style="display:inline-block;font-family:consolas">
@@ -36,7 +45,7 @@
       </div>
       <ul class="navbar-nav px-3">
         <li class="nav-item text-nowrap">
-          <a class="nav-link" onclick="startDebugPatterns(); $(this).attr('onclick',null);" href="javascript:void(0);">Start Test Routine</a>
+          <a class="nav-link" href="javascript:void(0);">Start Test Routine</a>
         </li>
       </ul>
     </nav>
@@ -104,10 +113,10 @@
 
         <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
           <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-            <h2><span id="matchType">Elimination</span> #<span id="matchNumber">3</span></h2>
+            <h2><span id="matchType">Robot Inactive</span> <span id="matchNumber"></span></h2>
             <div class="btn-toolbar mb-2 mb-md-0">
             	<h3>
-              		<span class="badge badge-success">Good</span> <span class="badge badge-danger">NUM Errors</span> <span class="badge badge-warning">NUM Warnings</span>
+              		<span id="match-good" style="display:none" class="badge badge-success">Good</span> <span id="match-errors" style="display:none" class="badge badge-danger"><span id="match-error-num">NUM</span> Errors</span> <span id="match-warnings" style="display:none" class="badge badge-warning"><span id="match-warning-num">NUM</span> Warnings</span>
           		</h3>
             </div>
           </div>
@@ -288,6 +297,7 @@
 
     <!-- Graphs -->
     <script src="js/Chart.min.js"></script>
+    <script src="js/socket.io.js"></script>
     <script src="js/dashboard.js"></script>
   </body>
 </html>

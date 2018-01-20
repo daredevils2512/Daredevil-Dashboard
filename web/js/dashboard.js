@@ -34,7 +34,7 @@ function initMatch(data) {
     match.replayNumber = data.replayNumber;
     match.eventName = data.eventName;
     $("#matchType").text(mtypeToReadable());
-    $("#matchNumber").text(data.matchNumber + ((match.replayNumber >= 1)?" (Replay #"+match.replayNumber+")":""))
+    $("#matchNumber").text("#" + data.matchNumber + ((match.replayNumber >= 1)?" (Replay #"+match.replayNumber+")":""))
 }
 function startMatch(){
     match.startTime = Date.now();
@@ -242,17 +242,30 @@ function setAlertState(alert,state){
     }
     updateAlerts();
 }
+var quotes = [
+    ["WHEN YOU HAVE COPD, IT CAN BE HARD TO BREATHE","Grandpa Wolf"],
+    ["its water game guise", "Dean kamen"],
+    ["Connor's Mom","Fabrication"],
+    ["We should use pixy cameras after 2017","Satan"],
+    ["It's programming's fault.", "Electronics & Build Depts."],
+    ["Told you so","Programming Dept."],
+    ["The pixy broke again, where's the calibration file?","Troy Martin"]
 
+]
+var lastQuoteUpdate = Date.now();
+function randomizeQuote(){
+    var quote = quotes[Math.round(Math.random()*(quotes.length-1))];
+    $("#quote-text").text("\""+quote[0]+"\"");
+    $("#quote-source").text(quote[1]);
+    lastQuoteUpdate = Date.now();
+}
+randomizeQuote();
 function updateDashboard(){
     if(match.active){
         $("link[rel='icon']").attr("href", "icon-active.png");
-        if($("#quote").css("display") != "none"){
-            $("#quote").hide();
-        }
-        if($("#matchHeader").css("display") == "none"){
-            $("#matchHeader").show();
-        }
-
+        $("#quote").hide();
+        $("#matchHeader").show();
+    
         if(match.gameStarted){
             $("#matchTime").text(millisTimeStr(Date.now()))
         }else{
@@ -261,13 +274,36 @@ function updateDashboard(){
 
     }else{
         $("link[rel='icon']").attr("href", "icon.png");
-        if($("#quote").css("display") == "none"){
-            $("#quote").show();
+
+        $("#quote").show();
+        $("#matchHeader").hide();
+
+        if(Date.now()-lastQuoteUpdate >= 5*1000){
+            randomizeQuote();
         }
-        if($("#matchHeader").css("display") != "none"){
-            $("#matchHeader").hide();
-        }
+        
     }
 }
 
 setInterval(function(){updateDashboard();},10);
+
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip({
+    trigger:"hover"
+  })
+})
+
+/**********************\
+  Start Connection Code
+\**********************/
+var host = "10.25.12.2"
+if(location.hasOwnProperty("search")){
+    if(location.search.toLowerCase().substring(1) == "testing"){
+        host = "localhost"
+    }
+}
+var socket = io("http://" + host + ":5024"); 
+
+socket.on("connect",function(){
+    console.log("connected.")
+})

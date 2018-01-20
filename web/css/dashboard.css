@@ -8,6 +8,22 @@ body {
   vertical-align: text-bottom;
 }
 
+.dashboard-buttons {
+    float:right;
+}
+.dashboard-buttons a {
+    color:white;
+    margin-left:5px;
+}
+
+.dashboard-buttons .disabled * {
+    color:rgba(255,255,255,0.25);
+}
+.dashboard-buttons .feather {
+    width:20px;
+    height:20px;
+}
+
 /*
  * Sidebar
  */
@@ -61,9 +77,9 @@ body {
  */
 
 .navbar-brand {
-  padding-top: .75rem;
-  padding-bottom: .75rem;
-  font-size: 1rem;
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+  font-size: 16px;
   background-color: rgba(0, 0, 0, .25);
   box-shadow: inset -1px 0 0 rgba(0, 0, 0, .25);
 }
@@ -103,3 +119,9 @@ body {
 
 .border-top { border-top: 1px solid #e5e5e5; }
 .border-bottom { border-bottom: 1px solid #e5e5e5; }
+
+
+a.disabled {
+   pointer-events: none;
+   cursor: default;
+}
