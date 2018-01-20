@@ -39,13 +39,14 @@ body {
 }
 
 .sidebar-sticky {
-  position: -webkit-sticky;
-  position: sticky;
-  top: 48px; /* Height of navbar */
-  height: calc(100vh - 48px);
+  position: -webkit-fixed;
+  position: fixed;
+  top: 56px; /* Height of navbar */
+  height: calc(100vh - 56px);
   padding-top: .5rem;
   overflow-x: hidden;
   overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+  width:16.6666667%;
 }
 
 .sidebar .nav-link {
@@ -75,6 +76,13 @@ body {
 /*
  * Navbar
  */
+
+.col-sidebar{
+  -webkit-box-flex: 0;
+  -ms-flex: 0 0 15%;
+  flex: 0 0 15%;
+  max-width: 15%;
+}
 
 .navbar-brand {
   padding-top: 1rem;

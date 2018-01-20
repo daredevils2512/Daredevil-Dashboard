@@ -262,7 +262,11 @@ function randomizeQuote(){
 randomizeQuote();
 function updateDashboard(){
     if(match.active){
-        $("link[rel='icon']").attr("href", "icon-active.png");
+        if(Math.floor(Date.now()/500)%2===0){
+            $("link[rel='icon']").attr("href", "icon-active.png");
+        }else{
+            $("link[rel='icon']").attr("href", "icon.png");
+        }
         $("#quote").hide();
         $("#matchHeader").show();
     
