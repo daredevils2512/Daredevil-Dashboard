@@ -155,7 +155,6 @@ function resetCharts() {
 
 var alerts = {
     errors: [
-        "brownout",
         "disabled",
         "dsoffline",
         "subsysfail",
@@ -165,7 +164,7 @@ var alerts = {
         "fmsfault"
     ],
     warnings: [
-        "lowvoltage"
+        "brownout"
     ]
 }
 var activeAlerts = {

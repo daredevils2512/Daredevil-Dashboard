@@ -72,7 +72,34 @@
                             <div class="card">
                                 <div class="card-body">
                                     <center><h2>Errors/Warnings</h2></center>
-                                    <a class="btn btn-primary" href="#" role="button">Link</a>
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                          <select class="custom-select" id="error">
+                                            <option value="disabled">fms e-stop</option>
+                                            <option value="dsoffline">DS Offline</option>
+                                            <option value="subsysfail">Subsys fail</option>
+                                            <option value="cmdfail">Cmd fail</option>
+                                            <option value="autofail">Auto fail</option>
+                                            <option value="autocollide">Auto collision</option>
+                                            <option value="fmsfault">FMS Failure</option>
+                                          </select>
+                                          <div class="input-group-append">
+                                            <button class="btn btn-outline-danger" type="button">Send</button>
+                                            <button class="btn btn-outline-danger" type="button">Recall</button>
+                                          </div>
+                                        </div>
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="input-group">
+                                          <select class="custom-select" id="warning">
+                                            <option value="brownout">Browing Out</option>
+                                          </select>
+                                          <div class="input-group-append">
+                                            <button class="btn btn-outline-warning" type="button">Send</button>
+                                            <button class="btn btn-outline-warning" type="button">Recall</button>
+                                          </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
