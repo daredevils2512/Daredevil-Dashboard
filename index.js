@@ -60,7 +60,7 @@ var genericData = function(){
 	return {
 		"driverstation":{ //check frc::DriverStation wpilibc++
 			"enabled":false, // put example of type (boolean = true, number = 1, etc)
-			"mode":"teleop"
+			"mode":"teleop",
 			"dsAttached":false,
 			"fmsAttached":false,
 			"isBrowningOut":false,
@@ -102,9 +102,6 @@ var savedData = {
 }
 var data = genericData();
 
-var categoryToDisplayType = {
-	""
-}
 function loadSavedData(filepath){
 	try{
 		return JSON.parse(fs.readFileAync(filepath,"utf8"));
@@ -127,6 +124,7 @@ io.on("connection", function(socket){
 	socket.on("auth",function(type){
 		if(type == "dashboard"){
 			socket.role="dashboard";
+			socket.emit("auth","success");
 		}else if(type == "robot"){
 			var validLocalhost = ["localhost","127.0.0.1","::1"]
 			if(validLocalhost.indexOf(socket.handshake.address) > -1){
@@ -140,10 +138,30 @@ io.on("connection", function(socket){
 		}else{
 			socket.emit("auth","fail","Invalid authentication role.")
 			console.warn("Authentication attempt failure from " + socket.handshake.address + " for INVALID role \"" + type + "\" failed!")
+			return;
 		}
+		socket.emit("data","",data);
 	})
-	socket.on("data", function(){
-		
+	socket.on("data", function(path,newValue){
+		if(socket.role == "robot"){
+			var current = data;
+			var steps = path.split(".");
+			while(steps.length > 1){
+				if(current.hasOwnProperty(steps[0])){
+					current = current[steps[0]];
+					steps.splice(0,1);
+				}else{
+					socket.emit("err",path + " is an invalid data path.");
+					console.error("Invalid path! \"" + path + "\"");
+					return;
+				}
+			}
+			current[steps[0]] = newValue;
+			socket.broadcast.emit("data",path,newValue);
+		}else{
+			socket.emit("err","Only the Robot can push data to the server.")
+			console.warn("Illegal Data Edit from " + socket.handshake.address + "!")
+		}
 	})
 	socket.on("disconnect", function(){
 		console.log("Disconnected!")

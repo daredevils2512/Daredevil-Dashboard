@@ -1,15 +1,11 @@
-var match = {
-    active:false,
-    gameStarted:false,
-    matchType:"none",
-    matchNumber:1,
-    replayNumber:1,
-    eventName:"EHS",
-    gameMessage:"",
-    startTime:0
+var data = {}; // fetch from server
+var ready = false;
+var _recording = false;
+function isRecording() {
+    return _recording || data.driverstation.enabled;
 }
 function mtypeToReadable() {
-    switch(match.matchType){
+    switch(data.match.type){
         case "practice":
         return "Practice";
 
@@ -261,8 +257,8 @@ function randomizeQuote(){
 }
 randomizeQuote();
 function updateDashboard(){
-    if(match.active){
-        if(Math.floor(Date.now()/500)%2===0){
+    if(ready){
+        if(Math.floor(Date.now()/500)%2===0 && isRecording()){
             $("link[rel='icon']").attr("href", "icon-active.png");
         }else{
             $("link[rel='icon']").attr("href", "icon.png");
@@ -270,7 +266,7 @@ function updateDashboard(){
         $("#quote").hide();
         $("#matchHeader").show();
     
-        if(match.gameStarted){
+        if(data.driverstation.enabled){
             $("#matchTime").text(millisTimeStr(Date.now()))
         }else{
             $("#matchTime").text("00:00:00")
@@ -309,5 +305,32 @@ if(location.hasOwnProperty("search")){
 var socket = io("http://" + host + ":5024"); 
 
 socket.on("connect",function(){
-    console.log("connected.")
+    console.log("Connected. Sending Authentication request.")
+    socket.emit("auth","dashboard")
 })
+
+socket.on("auth",function(result, message){
+    if(result == "fail"){
+        console.error("Authentication Error: " + message)
+    }else{
+        console.log("Authentication Successful.")
+    }
+})
+
+socket.on("err", function(errorText) {
+    console.error("Error from server: " + errorText);
+})
+
+socket.on("data", function(path, value){
+    if(path.length == 0){
+        if(!ready){
+            ready = true;
+        }
+        data = value;
+    }
+})
+
+socket.on("disconnect", function() {
+    ready = false;
+    console.warn("Lost Connection to Robot.")
+});
