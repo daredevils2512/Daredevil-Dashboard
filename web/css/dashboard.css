@@ -23,6 +23,11 @@ body {
     width:20px;
     height:20px;
 }
+@media (max-width: 1600px){
+  .hide-small{
+    display:none;
+  }
+}
 
 /*
  * Sidebar

@@ -233,7 +233,7 @@ function setAlertState(alert,state){
 }
 var quotes = [
     ["WHEN YOU HAVE COPD, IT CAN BE HARD TO BREATHE","Grandpa Wolf"],
-    ["its water game guise", "Dean kamen"],
+    ["its water game guise", "Dean Kamen"],
     ["Connor's Mom","Fabrication"],
     ["We should use pixy cameras after 2017","Satan"],
     ["It's programming's fault.", "Electronics & Build Depts."],
@@ -350,16 +350,23 @@ $(document).ready(function(){
 });
 function fieldDrawing(p){
     p.draw = function() {
+    	var mult = p.width/493;
         p.background(255);
         p.size(fDE.clientWidth,fDE.clientWidth*0.8);
         p.fill(0);
         //p.text(p.frameCount,10,10)
         p.pushMatrix();
             p.translate(p.width/2,p.height/2)
-
-            if(data.match.alliance == "blue"){
-                p.scale(-1,1);
-            }
+            
+            if(data.hasOwnProperty("match")){
+	            if(data.match.alliance == "blue"){
+	                p.scale(-1 * mult,1 * mult);
+	            }else{
+	            	p.scale(1*mult)
+	            }
+        	}else{
+        		p.scale(1*mult)
+        	}
             p.translate(-280,-177)
 
             p.noFill();
@@ -402,18 +409,20 @@ function fieldDrawing(p){
             }
             var red = p.color(255,0,0);
             var blue = p.color(0,0,255);
-            if(data.match.gameMessage){
-                var dat = data.match.gameMessage.toLowerCase().split("");
+            if(data.hasOwnProperty("match")){
+	            if(data.match.gameMessage){
+	                var dat = data.match.gameMessage.toLowerCase().split("");
 
-                colors.redSwitch.upper = (dat[0] == ((data.match.alliance == "red")?"l":"r") )?red:blue;
-                colors.redSwitch.lower = (dat[0] == ((data.match.alliance == "red")?"r":"l") )?red:blue;
+	                colors.redSwitch.upper = (dat[0] == ((data.match.alliance == "red")?"l":"r") )?red:blue;
+	                colors.redSwitch.lower = (dat[0] == ((data.match.alliance == "red")?"r":"l") )?red:blue;
 
-                colors.balance.upper = (dat[1] == ((data.match.alliance == "red")?"l":"r"))?red:blue;
-                colors.balance.lower = (dat[1] == ((data.match.alliance == "red")?"r":"l"))?red:blue;
+	                colors.balance.upper = (dat[1] == ((data.match.alliance == "red")?"l":"r"))?red:blue;
+	                colors.balance.lower = (dat[1] == ((data.match.alliance == "red")?"r":"l"))?red:blue;
 
-                colors.blueSwitch.upper = (dat[2] == ((data.match.alliance == "red")?"l":"r"))?red:blue;
-                colors.blueSwitch.lower = (dat[2] == ((data.match.alliance == "red")?"r":"l"))?red:blue;
-            }
+	                colors.blueSwitch.upper = (dat[2] == ((data.match.alliance == "red")?"l":"r"))?red:blue;
+	                colors.blueSwitch.lower = (dat[2] == ((data.match.alliance == "red")?"r":"l"))?red:blue;
+	            }
+	        }
             p.fill(0,0,0,100);
 
             p.stroke(colors.redSwitch.upper); // red switch upper
@@ -436,12 +445,12 @@ function fieldDrawing(p){
 
         p.popMatrix();
             p.textAlign(p.CENTER,p.TOP);
-            p.textSize(60);
+            p.textSize(60*mult);
             p.fill(0);
-            p.text(data.match.alliance.toUpperCase(),p.width/2,10)
-            p.textSize(30);
+            p.text((data.hasOwnProperty("match"))?data.match.alliance.toUpperCase():"NO ALLIANCE",p.width/2,10)
+            p.textSize(30*mult);
             p.textAlign(p.CENTER,p.BOTTOM);
-            p.text(data.match.gameMessage,p.width/2,p.height-25)
+            p.text((data.hasOwnProperty("match"))?data.match.gameMessage:"NO GAME MESSAGE",p.width/2,p.height-25)
             p.textSize(13);
             p.textAlign(p.LEFT,p.TOP)
 
