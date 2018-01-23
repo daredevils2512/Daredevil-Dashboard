@@ -3,7 +3,8 @@ $(function () {
     trigger:"hover"
   })
 })
-
+var data = {};
+var ready = false;
 /**********************\
   Start Connection Code
 \**********************/
@@ -24,6 +25,15 @@ socket.on("auth",function(result, message){
     }
 })
 
+socket.on("data", function(path, val){
+	if(path.length == 0){
+		data = val;
+		ready = true;
+
+
+	}
+})
+
 socket.on("err", function(errorText) {
     console.error("Error from server: " + errorText);
 })
@@ -32,3 +42,8 @@ socket.on("disconnect", function() {
     ready = false;
     console.warn("Lost Connection to Robot.")
 });
+
+/****************\
+ jQuery Listeners
+\****************/
+

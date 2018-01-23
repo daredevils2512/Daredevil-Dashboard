@@ -124,8 +124,25 @@ function saveData(data,filepath){
 	})
 }
 
-function dataHandler(path,value){
-
+function dataHandler(socket,path,value){
+	if(path.replace(/\./g,"").length == 0){
+		socket.emit("err","Not allowed to set root data. >:(");
+		return;
+	}
+	var current = data;
+	var steps = path.split(".");
+	while(steps.length > 1){
+		if(current.hasOwnProperty(steps[0])){
+			current = current[steps[0]];
+			steps.splice(0,1);
+		}else{
+			socket.emit("err",path + " is an invalid data path.");
+			console.error("Invalid path! \"" + path + "\"");
+			return;
+		}
+	}
+	current[steps[0]] = newValue;
+	socket.broadcast.emit("data",path,newValue);
 }
 io.on("connection", function(socket){
 	console.log("Connected!")
@@ -153,23 +170,20 @@ io.on("connection", function(socket){
 	})
 	socket.on("data", function(path,newValue){
 		if(socket.role == "robot"){
-			var current = data;
-			var steps = path.split(".");
-			while(steps.length > 1){
-				if(current.hasOwnProperty(steps[0])){
-					current = current[steps[0]];
-					steps.splice(0,1);
-				}else{
-					socket.emit("err",path + " is an invalid data path.");
-					console.error("Invalid path! \"" + path + "\"");
-					return;
-				}
-			}
-			current[steps[0]] = newValue;
-			socket.broadcast.emit("data",path,newValue);
+			dataHandler(socket,path,newValue);
 		}else{
 			socket.emit("err","Only the Robot can push data to the server.")
 			console.warn("Illegal Data Edit from " + socket.handshake.address + "!")
+		}
+	})
+	socket.on("event", function(event){
+		if(socket.role == "robot"){
+			switch(event.toLowerCase()){
+				case "dsenable"
+			}
+		}else{
+			socket.emit("err","Only the Robot can fire events.")
+			console.warn("Illegal Event Fire from " + socket.handshake.address + "!")
 		}
 	})
 	socket.on("disconnect", function(){

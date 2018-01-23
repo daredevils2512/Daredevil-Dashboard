@@ -44,7 +44,17 @@
                                 <div class="card-body">
                                     <center><h2>Virtual DriverStation</h2></center>
                                     <div class="mb-3">
-                                        <a class="btn btn-success" href="#" role="button">Enable</a> <a class="btn btn-warning disabled" href="#" role="button">Disable</a> <a class="btn btn-danger disabled" href="#" role="button">E-Stop</a>
+                                        <a class="btn btn-success" id="ds-enable" href="javascript:void(0);" role="button">Enable</a>
+                                        <a class="btn btn-warning disabled" id="ds-disable" href="javascript:void(0);" role="button">Disable</a>
+                                        <a class="btn btn-danger disabled" id="ds-estop" href="javascript:void(0);" role="button">E-Stop</a>
+                                    </div>
+                                    <div class="mb-3">
+                                        <select class="custom-select" id="ds-mode">
+                                            <option value="teleop">TeleOp</option>
+                                            <option value="auto">Autonomous</option>
+                                            <option value="practice">Practice</option>
+                                            <option value="test">Test</option>
+                                        </select>
                                     </div>
                                     <div class="input-group mb-3">
                                       <div class="input-group-prepend">
@@ -108,7 +118,8 @@
                                 <div class="card-body">
                                     <center><h2>Virtual FMS</h2></center>
                                     <div class="mb-3">
-                                        <a class="btn btn-primary" href="#" role="button">Connect</a> <a class="btn btn-secondary disabled" href="#" role="button">Disconnect</a>
+                                        <a class="btn btn-primary" href="javascript:void(0);" id="fms-connect" role="button">Connect</a> 
+                                        <a class="btn btn-secondary disabled" href="javascript:void(0);" id="fms-disconnect" role="button">Disconnect</a>
                                     </div>
                                     <div class="mb-3">
                                         <input type="text" class="form-control" placeholder="event name">
@@ -120,7 +131,9 @@
                                         <input type="number" class="form-control" placeholder="replay num">
                                     </div>
                                     <div class="mb-3">
-                                        <a class="btn btn-success disabled" href="#" role="button">Enable</a> <a class="btn btn-warning disabled" href="#" role="button">Disable</a> <a class="btn btn-danger disabled" href="#" role="button">E-Stop</a>
+                                        <a class="fms btn btn-success disabled" id="fms-enable" href="javascript:void(0);" role="button">Enable</a>
+                                        <a class="fms btn btn-warning disabled" id="fms-disable" href="javascript:void(0);" role="button">Disable</a> 
+                                        <a class="fms btn btn-danger disabled" id="fms-estop" href="javascript:void(0);" role="button">E-Stop</a>
                                     </div>
                                 </div>
                             </div>
