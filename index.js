@@ -60,6 +60,7 @@ var genericData = function(){
 	return {
 		"driverstation":{ //check frc::DriverStation wpilibc++
 			"enabled":false, // put example of type (boolean = true, number = 1, etc)
+			"estopped":false,
 			"mode":"teleop",
 			"dsAttached":false,
 			"fmsAttached":false,
@@ -67,14 +68,14 @@ var genericData = function(){
 			"batteryVoltage":12.5
 		},
 		"match": { //check frc::DriverStation wpilibc++
-			"eventName":"Gitch",
-			"gameMessage":"LRL",
-			"type":"qualifications",
+			"eventName":"Daredevils",
+			"gameMessage":"RRR",
+			"type":"none",
 			"number":1,
 			"replay":0,
 			"alliance":"red",
 			"dslocation":1,
-			"currentTime":0,
+			"startTime":0, // in millis
 		},
 		"drivetrain": {
 			"motorControllers": {
@@ -90,6 +91,10 @@ var genericData = function(){
 				"backLeft":encoder(),
 				"backRight":encoder()
 			}
+		},
+		alerts:{
+			errors:[],
+			warnings:[]
 		}
 	}
 }
@@ -117,6 +122,10 @@ function saveData(data,filepath){
 		console.error(err);
 
 	})
+}
+
+function dataHandler(path,value){
+
 }
 io.on("connection", function(socket){
 	console.log("Connected!")
@@ -165,6 +174,13 @@ io.on("connection", function(socket){
 	})
 	socket.on("disconnect", function(){
 		console.log("Disconnected!")
+	})
+	socket.on("debug", function(command){
+		if(command == "enable"){
+			data.driverstation.enabled = true;
+			data.match.startTime = Date.now();
+			io.emit("data","",data); 
+		}
 	})
 })
 

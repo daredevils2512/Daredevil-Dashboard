@@ -22,7 +22,7 @@ function mtypeToReadable() {
         return "Unknown Match Type";
     }
 }
-function initMatch(data) {
+/*function initMatch(data) {
     match.active = true;
     match.gameStarted = false;
     match.matchType = data.matchType;
@@ -36,7 +36,7 @@ function startMatch(){
     match.startTime = Date.now();
     match.gameStarted = true;
     match.active = true;
-}
+}*/
 var genericLineChart = function() {
     return {
         type: 'line',
@@ -95,15 +95,15 @@ function newChart(id, settings) {
     charts.push(chart);
     return chart;
 }
-newChart("testChart", genericLineChart());
-newChart("testChart2", genericLineChart());
+//newChart("testChart", genericLineChart());
+//newChart("testChart2", genericLineChart());
 
 function fixedNum(num) {
     var str = num.toString();
     return (str.length == 1) ? ("0" + str) : str;
 }
-function millisTimeStr(time){
-    var modTime = time - match.startTime;
+function millisTimeStr(){
+    var modTime = Date.now() - data.match.startTime;
     var hours = Math.floor(modTime / 1000 / 60 / 60);
     var minutes = Math.floor((modTime - (hours * 1000 * 60 * 60)) / 1000 / 60);
     var seconds = Math.floor((modTime - (hours * 1000 * 60 * 60) - (minutes * 1000 * 60)) / 1000);
@@ -135,14 +135,7 @@ function resetCharts() {
 
 }
 
-function startDebugPatterns() {
-    initMatch({
-        matchType:"none",
-        matchNumber:1,
-        replayNumber:1,
-        eventName:"2512 Debug"
-    })
-    startMatch();
+/*function startDebugPatterns() {
     
     setInterval(function() {
         addData(
@@ -158,7 +151,7 @@ function startDebugPatterns() {
             Math.tan(Date.now() / 150)
         );
     }, 100);
-}
+}*/
 
 var alerts = {
     errors: [
@@ -263,11 +256,14 @@ function updateDashboard(){
         }else{
             $("link[rel='icon']").attr("href", "icon.png");
         }
+        $("#matchType").text(data.match.eventName + " " + mtypeToReadable());
+        $("#matchNumber").text("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))
+
         $("#quote").hide();
         $("#matchHeader").show();
     
         if(data.driverstation.enabled){
-            $("#matchTime").text(millisTimeStr(Date.now()))
+            $("#matchTime").text(millisTimeStr())
         }else{
             $("#matchTime").text("00:00:00")
         }
@@ -327,6 +323,20 @@ socket.on("data", function(path, value){
             ready = true;
         }
         data = value;
+    }else{
+        var current = data;
+        var steps = path.split(".");
+        while(steps.length > 1){
+            if(current.hasOwnProperty(steps[0])){
+                current = current[steps[0]];
+                steps.splice(0,1);
+            }else{
+                socket.emit("err",path + " is an invalid data path.");
+                console.error("Invalid path! \"" + path + "\"");
+                return;
+            }
+        }
+        current[steps[0]] = value;
     }
 })
 
@@ -334,3 +344,107 @@ socket.on("disconnect", function() {
     ready = false;
     console.warn("Lost Connection to Robot.")
 });
+var fDE = document.getElementById("fieldDrawing");
+$(document).ready(function(){
+    var procInstance = new Processing(fDE,fieldDrawing);
+});
+function fieldDrawing(p){
+    p.draw = function() {
+        p.background(255);
+        p.size(fDE.clientWidth,fDE.clientWidth*0.8);
+        p.fill(0);
+        //p.text(p.frameCount,10,10)
+        p.pushMatrix();
+            p.translate(p.width/2,p.height/2)
+
+            if(data.match.alliance == "blue"){
+                p.scale(-1,1);
+            }
+            p.translate(-280,-177)
+
+            p.noFill();
+            p.stroke(0);
+            p.strokeWeight(6);
+            p.strokeCap(p.SQUARE);
+
+            p.line(60,80,500,80);
+            p.line(60,280,500,280);
+
+            p.rect(110,118,40,120);
+
+            p.rect(270,128,20,100);
+
+            p.rect(410,118,40,120);
+
+            p.stroke(255,0,0)
+            p.line(60,80,40,100);
+            p.line(40,100,40,260);
+            p.line(60,280,40,260)
+
+            p.stroke(0,0,255);
+            p.line(500,80,520,100);
+            p.line(520,100,520,260)
+            p.line(500,280,520,260)
+
+            var colors = {
+                redSwitch:{
+                    upper:p.color(100),
+                    lower:p.color(100)
+                },
+                balance:{
+                    upper:p.color(100),
+                    lower:p.color(100)
+                },
+                blueSwitch:{
+                    upper:p.color(100),
+                    lower:p.color(100)
+                }
+            }
+            var red = p.color(255,0,0);
+            var blue = p.color(0,0,255);
+            if(data.match.gameMessage){
+                var dat = data.match.gameMessage.toLowerCase().split("");
+
+                colors.redSwitch.upper = (dat[0] == ((data.match.alliance == "red")?"l":"r") )?red:blue;
+                colors.redSwitch.lower = (dat[0] == ((data.match.alliance == "red")?"r":"l") )?red:blue;
+
+                colors.balance.upper = (dat[1] == ((data.match.alliance == "red")?"l":"r"))?red:blue;
+                colors.balance.lower = (dat[1] == ((data.match.alliance == "red")?"r":"l"))?red:blue;
+
+                colors.blueSwitch.upper = (dat[2] == ((data.match.alliance == "red")?"l":"r"))?red:blue;
+                colors.blueSwitch.lower = (dat[2] == ((data.match.alliance == "red")?"r":"l"))?red:blue;
+            }
+            p.fill(0,0,0,100);
+
+            p.stroke(colors.redSwitch.upper); // red switch upper
+            p.rect(110,118,40,40);
+
+            p.stroke(colors.redSwitch.lower); // red switch lower
+            p.rect(110,198,40,40);
+
+            p.stroke(colors.balance.upper); // balance upper
+            p.rect(260,118,40,40);
+
+            p.stroke(colors.balance.lower); // balance lower
+            p.rect(260,198,40,40);
+
+            p.stroke(colors.blueSwitch.upper); // blue switch upper
+            p.rect(410,118,40,40);
+
+            p.stroke(colors.blueSwitch.lower); // blue switch lower
+            p.rect(410,198,40,40);
+
+        p.popMatrix();
+            p.textAlign(p.CENTER,p.TOP);
+            p.textSize(60);
+            p.fill(0);
+            p.text(data.match.alliance.toUpperCase(),p.width/2,10)
+            p.textSize(30);
+            p.textAlign(p.CENTER,p.BOTTOM);
+            p.text(data.match.gameMessage,p.width/2,p.height-25)
+            p.textSize(13);
+            p.textAlign(p.LEFT,p.TOP)
+
+
+    }
+}

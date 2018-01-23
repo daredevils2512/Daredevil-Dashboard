@@ -133,3 +133,11 @@ a.disabled {
    pointer-events: none;
    cursor: default;
 }
+
+#fieldDrawing {
+  width:100%;
+}
+
+canvas {
+  outline: none;
+}
