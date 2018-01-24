@@ -31,7 +31,20 @@ socket.on("data", function(path, val){
 		ready = true;
 
 
-	}
+	}else{
+        var current = data;
+        var steps = path.split(".");
+        while(steps.length > 1){
+            if(current.hasOwnProperty(steps[0])){
+                current = current[steps[0]];
+                steps.splice(0,1);
+            }else{
+                console.error("Invalid path! \"" + path + "\"");
+                return;
+            }
+        }
+        current[steps[0]] = value;
+  }
 })
 
 socket.on("err", function(errorText) {
@@ -46,4 +59,22 @@ socket.on("disconnect", function() {
 /****************\
  jQuery Listeners
 \****************/
+$("#enable").click(function(){
+  socket.emit("event","enable");
+});
+$("#disable").click(function(){
+  socket.emit("event","disable");
+});
+$("#estop").click(function(){
+  socket.emit("event","estop");
+});
+$("#estopClear").click(function(){
+  socket.emit("event","estopClear");
+});
 
+$("#fms-connect").click(function(){
+    socket.emit("event","fmsconnect")
+})
+$("#fms-disconnect").click(function(){
+    socket.emit("event","fmsdisconnect")
+})

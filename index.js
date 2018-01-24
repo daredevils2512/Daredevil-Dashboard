@@ -2,6 +2,10 @@ var http = require('http').Server();
 var io = require("socket.io")(http);
 var fs = require('fs');
 
+Object.prototype.copy = function(){
+	return JSON.parse(JSON.stringify(this));
+}
+
 /**
 	DATA TEMPLATES
 **/
@@ -53,6 +57,7 @@ var doubleSolenoid = function() {
 		"value":"off"
 	}
 }
+var matchLength = ((2/*minues*/*60)+30/*seconds*/)*1000; //conv to millis
 var genericData = function(){
 	/*************\
 	 Update Yearly
@@ -75,7 +80,7 @@ var genericData = function(){
 			"replay":0,
 			"alliance":"red",
 			"dslocation":1,
-			"startTime":0, // in millis
+			"startTime":-1, // in millis
 		},
 		"drivetrain": {
 			"motorControllers": {
@@ -93,8 +98,8 @@ var genericData = function(){
 			}
 		},
 		alerts:{
-			errors:[],
-			warnings:[]
+			errors:{},
+			warnings:{}
 		}
 	}
 }
@@ -104,7 +109,10 @@ var genericData = function(){
 **/
 var savedData = {
 	// objects will consist of data
+	//key = startTime, val = array of datas
 }
+var matchLog = [
+];
 var data = genericData();
 
 function loadSavedData(filepath){
@@ -124,7 +132,7 @@ function saveData(data,filepath){
 	})
 }
 
-function dataHandler(socket,path,value){
+function dataHandler(path,newValue){
 	if(path.replace(/\./g,"").length == 0){
 		socket.emit("err","Not allowed to set root data. >:(");
 		return;
@@ -142,7 +150,47 @@ function dataHandler(socket,path,value){
 		}
 	}
 	current[steps[0]] = newValue;
-	socket.broadcast.emit("data",path,newValue);
+	io.emit("data",path,newValue);
+}
+var logEntryDelay = 25; // every x milis, log.
+var logInterval = -1;
+var manualRecording = false;
+function startLogger(manual){
+	matchLog.push(data.copy());
+	if(manual) manualRecording = true;
+	logInterval = setInterval(function(){
+		matchLog.push(data.copy())
+		if( ( (Date.now() - data.match.startTime > matchLength 
+			&& !data.driverstation.enabled ) || 
+				data.driverstation.estopped ) && data.driverstation.fmsAttached && !manualRecording ){ // if match over OR estopped
+			stopLogger();
+		}
+	},logEntryDelay);
+}
+function stopLogger(doNotSave){
+	clearInterval(logInterval);
+	logInterval = -1;
+	manualRecording = false;
+	if(doNotSave) return;
+	//save and reset logs
+	savedData[matchLog[0].match.startTime] = matchLog.copy();
+	console.log("Saved match data to \"" + matchLog[0].match.startTime + "\"")
+	dataHandler("match.startTime",-1);
+	matchLog=[];
+}
+var alerts = {
+    errors: [
+        "disabled",
+        "dsoffline",
+        "subsysfail",
+        "cmdfail",
+        "autofail",
+        "autocollide",
+        "fmsfault"
+    ],
+    warnings: [
+        "brownout"
+    ]
 }
 io.on("connection", function(socket){
 	console.log("Connected!")
@@ -152,7 +200,7 @@ io.on("connection", function(socket){
 			socket.role="dashboard";
 			socket.emit("auth","success");
 		}else if(type == "robot"){
-			var validLocalhost = ["localhost","127.0.0.1","::1"]
+			var validLocalhost = ["localhost","127.0.0.1","::1","::ffff:127.0.0.1"]
 			if(validLocalhost.indexOf(socket.handshake.address) > -1){
 				socket.emit("auth","success");
 				socket.role = "robot";
@@ -170,7 +218,7 @@ io.on("connection", function(socket){
 	})
 	socket.on("data", function(path,newValue){
 		if(socket.role == "robot"){
-			dataHandler(socket,path,newValue);
+			dataHandler(path,newValue);
 		}else{
 			socket.emit("err","Only the Robot can push data to the server.")
 			console.warn("Illegal Data Edit from " + socket.handshake.address + "!")
@@ -179,11 +227,93 @@ io.on("connection", function(socket){
 	socket.on("event", function(event){
 		if(socket.role == "robot"){
 			switch(event.toLowerCase()){
-				case "dsenable"
+				case "enable":
+					dataHandler("driverstation.enabled",true);
+					if(data.driverstation.fmsAttached){
+						if(data.match.startTime == -1){
+							dataHandler("match.startTime",Date.now());
+							
+							startLogger();
+						}
+					}else{
+						dataHandler("match.startTime",Date.now());
+					}
+
+				break;
+				case "disable":
+					dataHandler("driverstation.enabled",false);
+					if(!data.driverstation.fmsAttached){
+						dataHandler("match.startTime",-1);
+					}
+				break;
+				case "estop":
+					dataHandler("driverstation.enabled",false);
+					dataHandler("driverstation.estopped",true);
+					if(!data.driverstation.fmsAttached){
+						dataHandler("match.startTime",-1);
+					}else{
+						dataHandler("alerts.errors.disabled",true);
+					}
+				break;
+				case "estopclear":
+					dataHandler("driverstation.estopped",false);
+				break;
+				case "fmsconnect":
+					dataHandler("driverstation.fmsAttached",true);
+					if(data.alerts.errors.fmsfault){
+						dataHandler("alerts.errors.fmsfault",false);
+					}
+				break;
+				case "fmsdisconnect":
+					dataHandler("driverstation.fmsAttached",false);
+					if(data.driverstation.enabled){
+						dataHandler("alerts.errors.fmsfault",true);
+					}
+				break;
+				default:
+					socket.emit("err","Invalid Robot Event: \"" + event + "\"")
+					console.warn("Invalid Robot Event: \"" + event + "\"")
+				break;
 			}
 		}else{
-			socket.emit("err","Only the Robot can fire events.")
-			console.warn("Illegal Event Fire from " + socket.handshake.address + "!")
+			switch(event.toLowerCase()){
+				case "startRecording":
+					startRecording(true);
+				break;
+				case "stopRecording":
+					if(manualRecording){
+						stopRecording();
+					}else{
+						socket.emit("err","Cannot stop recording without a manual start.")
+						console.warn("DS at " + socket.handshake.address + " attempted to stop recording without manually starting a recording");
+					}
+				break;
+				case "abortRecording":
+					if(manualRecording){
+						stopRecording(true);
+					}else{
+						socket.emit("err","Cannot abort recording without a manual start.")
+						console.warn("DS at " + socket.handshake.address + " attempted to abort recording without manually starting a recording");
+					}
+				break;
+				default:
+					socket.emit("err","Invalid Dashboard Event: \"" + event + "\"")
+					console.warn("Invalid Dashboard Event: \"" + event + "\"")
+				break;
+			}
+		}
+	})
+	socket.on("matchData", function(eventName,matchType,matchNumber,matchReplay,matchAlliance,matchDSLocation){
+		if(socket.role == "robot"){
+			dataHandler("match.eventName",eventName);
+			dataHandler("match.type",matchType);
+			dataHandler("match.number",matchNumber);
+			dataHandler("match.replay",matchReplay);
+			dataHandler("match.alliance",matchAlliance);
+			dataHandler("match.dslocation",matchDSLocation);
+		}else{
+			socket.emit("err","Only the Robot can push data to the server.")
+			console.warn("Illegal Match Data Edit from " + socket.handshake.address + "!")
 		}
 	})
 	socket.on("disconnect", function(){

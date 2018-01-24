@@ -167,37 +167,37 @@ var alerts = {
         "brownout"
     ]
 }
-var activeAlerts = {
-    errors:[],
-    warnings:[]
-}
 function updateAlerts() {
-    for(var i = 0; i < alerts.errors.length; i++){
-        if(activeAlerts.errors.indexOf(alerts.errors[i]) == -1){
+    var errorCount = 0;
+    for(var i in alerts.errors){
+        if(!data.alerts.errors[alerts.errors[i]]){
             $("#err-" + alerts.errors[i]).hide();
         }else{
+            errorCount++;
             $("#err-" + alerts.errors[i]).show();
         }
     }
-    for(var i = 0; i < alerts.warnings.length; i++){
-        if(activeAlerts.warnings.indexOf(alerts.warnings[i]) == -1){
+    var warningCount = 0;
+    for(var i in alerts.warnings){
+        if(!data.alerts.warnings[alerts.warnings[i]]){
             $("#warn-" + alerts.warnings[i]).hide();
         }else{
+            warningCount++;
             $("#warn-" + alerts.warnings[i]).show();
         }
     }
-    if(activeAlerts.errors.length <= 0){
+    if(errorCount <= 0){
         $("#error").hide();
     }else{
         $("#error").show();
     }
-    if(activeAlerts.warnings.length <= 0){
+    if(warningCount <= 0){
         $("#warnings").hide();
     }else{
         $("#warnings").show();
     }
 }
-function setAlertState(alert,state){
+/*function setAlertState(alert,state){
     if(alerts.errors.indexOf(alert) > -1){
         if(state == true){
             if(activeAlerts.errors.indexOf(alert) == -1){
@@ -229,7 +229,7 @@ function setAlertState(alert,state){
         return;
     }
     updateAlerts();
-}
+}*/
 var quotes = [
     ["WHEN YOU HAVE COPD, IT CAN BE HARD TO BREATHE","Grandpa Wolf"],
     ["its water game guise", "Dean Kamen"],
@@ -261,12 +261,12 @@ function updateDashboard(){
         $("#quote").hide();
         $("#matchHeader").show();
     
-        if(data.driverstation.enabled){
+        if(data.match.startTime > -1){
             $("#matchTime").text(millisTimeStr())
         }else{
             $("#matchTime").text("00:00:00")
         }
-
+        updateAlerts();
     }else{
         $("link[rel='icon']").attr("href", "icon.png");
 
@@ -330,7 +330,6 @@ socket.on("data", function(path, value){
                 current = current[steps[0]];
                 steps.splice(0,1);
             }else{
-                socket.emit("err",path + " is an invalid data path.");
                 console.error("Invalid path! \"" + path + "\"");
                 return;
             }
