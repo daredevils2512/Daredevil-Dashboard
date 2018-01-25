@@ -73,7 +73,6 @@ var genericData = function(){
 			"mode":"teleop",
 			"dsAttached":false,
 			"fmsAttached":false,
-			"isBrowningOut":false,
 			"batteryVoltage":12.5
 		},
 		"match": { //check frc::DriverStation wpilibc++
@@ -191,7 +190,7 @@ function stopLogger(doNotSave){
 	matchLog=[];
 }
 var alerts = {
-    errors: [
+    errors: [ /* Change alert system to dynamically generate alerts at the top of the page. */
         "disabled",
         "dsoffline",
         "subsysfail",
