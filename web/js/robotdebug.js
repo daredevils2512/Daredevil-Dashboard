@@ -84,19 +84,36 @@ $("#fms-disconnect").click(function(){
 $("#voltage").change(function() {
 	var voltage = $(this).val();
 	socket.emit("data","driverstation.batteryVoltage",voltage);
-	if(voltage <= 9.5){
+	/*if(voltage <= 9.5){
 		//TODO: add multi stage
-		/*
+		
 		brownout warning (9.5v)
 		browning out (7.5v)
 		blackout warning (5.5)
 		blackout (robot disconnect)
-		*/
+		
 	}else if(voltage <= 6.8){
 		socket.emit("data","driverstation.isBrowningOut",true)
 	}else{
 		socket.emit("data","driverstation.isBrowningOut",false)
-	}
+	}*/
+  if(voltage <= 5.5){
+    socket.emit("alert","blackoutwarning",true)
+    socket.emit("alert","brownout",false)
+    socket.emit("alert","brownoutwarning",false)
+  }else if(voltage <= 7.5){
+    socket.emit("alert","blackoutwarning",false)
+    socket.emit("alert","brownout",true)
+    socket.emit("alert","brownoutwarning",false)
+  }else if(voltage <= 9.5){
+    socket.emit("alert","blackoutwarning",false)
+    socket.emit("alert","brownout",false)
+    socket.emit("alert","brownoutwarning",true)
+  }else{
+    socket.emit("alert","blackoutwarning",false)
+    socket.emit("alert","brownout",false)
+    socket.emit("alert","brownoutwarning",false)
+  }
 })
 
 

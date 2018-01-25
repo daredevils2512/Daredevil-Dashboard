@@ -64,8 +64,56 @@ var genericData = function(){
 	\*************/
 	return {
 		"dashboard":{ // daredevil dashboard data
-			blackout:false
-
+			"alerts": { /* Change alert system to dynamically generate alerts at the top of the page. */
+		        "fmsestop":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "dsoffline":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "subsysfail":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "cmdfail":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "autofail":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "autocollide":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "fmsfault":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "brownoutwarning":{
+		        	active:false,
+		        	type:"secondary"
+		        },
+		        "brownout":{
+		        	active:false,
+		        	type:"warning"
+		        },
+		        "blackoutwarning":{
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "blackout": {
+		        	active:false,
+		        	type:"danger"
+		        },
+		        "conndropped":{
+		        	active:false,
+		        	type:"danger"
+		        }
+		    },
 		},
 		"driverstation":{ //check frc::DriverStation wpilibc++
 			"enabled":false, // put example of type (boolean = true, number = 1, etc)
@@ -100,10 +148,6 @@ var genericData = function(){
 				"backRight":encoder()
 			}
 		},
-		alerts:{
-			errors:{},
-			warnings:{}
-		}
 	}
 }
 
@@ -134,9 +178,6 @@ function saveData(data,filepath){
 
 	})
 }
-var pathToWarning = {
-	"driverstation.isBrowningOut":"alerts.warnings.brownout"
-}
 function dataHandler(path,newValue){
 	if(path.replace(/\./g,"").length == 0){
 		socket.emit("err","Not allowed to set root data. >:(");
@@ -149,15 +190,11 @@ function dataHandler(path,newValue){
 			current = current[steps[0]];
 			steps.splice(0,1);
 		}else{
-			socket.emit("err",path + " is an invalid data path.");
 			console.error("Invalid path! \"" + path + "\"");
 			return;
 		}
 	}
 	current[steps[0]] = newValue;
-	if(pathToWarning.hasOwnProperty(path)){
-		dataHandler(pathToWarning[path],newValue)
-	}
 	io.emit("data",path,newValue);
 }
 var logEntryDelay = 25; // every x milis, log.
@@ -188,20 +225,6 @@ function stopLogger(doNotSave){
 	console.log("Saved match data to \"" + matchLog[0].match.startTime + "\"")
 	dataHandler("match.startTime",-1);
 	matchLog=[];
-}
-var alerts = {
-    errors: [ /* Change alert system to dynamically generate alerts at the top of the page. */
-        "disabled",
-        "dsoffline",
-        "subsysfail",
-        "cmdfail",
-        "autofail",
-        "autocollide",
-        "fmsfault"
-    ],
-    warnings: [
-        "brownout"
-    ]
 }
 io.on("connection", function(socket){
 	console.log("Connected!")
@@ -267,7 +290,7 @@ io.on("connection", function(socket){
 					if(!data.driverstation.fmsAttached){
 						dataHandler("match.startTime",-1);
 					}else{
-						dataHandler("alerts.errors.disabled",true);
+						dataHandler("dashboard.alerts.fmsestop",true);
 					}
 				break;
 				case "estopclear":
@@ -275,14 +298,14 @@ io.on("connection", function(socket){
 				break;
 				case "fmsconnect":
 					dataHandler("driverstation.fmsAttached",true);
-					if(data.alerts.errors.fmsfault){
-						dataHandler("alerts.errors.fmsfault",false);
+					if(data.dashboard.alerts.fmsfault){
+						dataHandler("dashboard.alerts.fmsfault",false);
 					}
 				break;
 				case "fmsdisconnect":
 					dataHandler("driverstation.fmsAttached",false);
 					if(data.driverstation.enabled){
-						dataHandler("alerts.errors.fmsfault",true);
+						dataHandler("dashboard.alerts.fmsfault",true);
 					}
 				break;
 				default:
@@ -325,6 +348,21 @@ io.on("connection", function(socket){
 					console.warn("Invalid Dashboard Event: \"" + event + "\"")
 				break;
 			}
+		}
+	})
+	socket.on("alert", function(alertName,status){
+		if(socket.role == "robot"){
+			if(data.dashboard.alerts.hasOwnProperty(alertName)){
+				if(data.dashboard.alerts[alertName].active != status){
+					data.dashboard.alerts[alertName].active = status;
+					io.emit("data","dashboard.alerts." + alertName + ".active",status);
+				}
+			}else{
+				socket.emit("err","Invalid alert: " + alertName);
+			}
+		}else{
+			socket.emit("err","Only the Robot can set alert status.")
+			console.warn("Illegal Alert from " + socket.handshake.address + "!")
 		}
 	})
 	socket.on("matchData", function(eventName,matchType,matchNumber,matchReplay,matchAlliance,matchDSLocation){

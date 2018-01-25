@@ -152,85 +152,38 @@ function resetCharts() {
         );
     }, 100);
 }*/
-var panic = false;
-var alerts = {
-    errors: [
-        "disabled",
-        "dsoffline",
-        "subsysfail",
-        "cmdfail",
-        "autofail",
-        "autocollide",
-        "fmsfault"
-    ],
-    warnings: [
-        "brownout"
-    ]
+var alertContents = {
+    "fmsestop":"ROBOT FMS ESTOP <div style=\"font-size:20px;display:block\">Robot was Emergency Stopped during a match while connected to the FMS.",
+    "dsoffline":"DRIVER STATION OFFLINE",
+    "subsysfail":"SUBSYSTEM FAILURE",
+    "cmdfail":"COMMAND FAILURE",
+    "autofail":"AUTONOMOUS FAILURE",
+    "autocollide":"AUTONOMOUS COLLISION",
+    "fmsfault":"FMS CONNECTION DROPPED <div style=\"font-size:20px;display:block\">REPORT TO FTA ASAP<br><span style=\"font-size:15px\">DriverStation#IsFMSAttached() reported false after being previously reported true before and after robot was enabled.</span></div>",
+    "brownoutwarning":"BROWNOUT IMMINENT",
+    "brownout":"BROWNOUT",
+    "blackoutwarning":"DANGEROUSLY LOW VOLTAGE <div style=\"font-weight:bold\">BLACKOUT IMMINENT</div>",
+    "blackout": "BLACKOUT <div style=\"font-size:20px;display:block\">The robot lost connection due to excessive power draw.</div>",
+    "conndropped": "CONNECTION LOST <div style=\"font-size:16px;display:block\">Lost connection to the dashboard server for an unknown reason. <b>If the robot is still running, please report this error to programming ASAP</b></div>"
 }
 function updateAlerts() {
-    var errorCount = 0;
-    for(var i in alerts.errors){
-        if(!data.alerts.errors[alerts.errors[i]]){
-            $("#err-" + alerts.errors[i]).hide();
-        }else{
-            errorCount++;
-            $("#err-" + alerts.errors[i]).show();
-        }
+    for(var i in data.dashboard.alerts){
+    	var alert = data.dashboard.alerts[i];
+    	if(alert.active == true){
+    		if($("#alert-" + i).length == 1) return;
+	    	var contents = "ALERT: " + i;
+	    	if(alertContents.hasOwnProperty(i)){
+	    		contents = alertContents[i];
+	    	}
+	    	var ele = $("<div>").addClass("alert").addClass("alert-" + alert.type).attr("id","alert-" + i);
+	    	ele.append($("<h1>").addClass("text-center").html(contents));
+	    	$("#alerts").append(ele);
+    	}else{
+    		$("#alert-" + i).remove();
+    	}
     }
-    var warningCount = 0;
-    for(var i in alerts.warnings){
-        if(!data.alerts.warnings[alerts.warnings[i]]){
-            $("#warn-" + alerts.warnings[i]).hide();
-        }else{
-            warningCount++;
-            $("#warn-" + alerts.warnings[i]).show();
-        }
-    }
-    if(errorCount <= 0){
-        $("#errors").hide();
-    }else{
-        $("#errors").show();
-    }
-    if(warningCount <= 0){
-        $("#warnings").hide();
-    }else{
-        $("#warnings").show();
-    }
-    $("#err-blackout").hide();
 }
-/*function setAlertState(alert,state){
-    if(alerts.errors.indexOf(alert) > -1){
-        if(state == true){
-            if(activeAlerts.errors.indexOf(alert) == -1){
-                activeAlerts.errors.push(alert);
-            }
-        }else if(state == false){
-            if(activeAlerts.errors.indexOf(alert) > -1){
-                activeAlerts.errors.splice(activeAlerts.errors.indexOf(alert),1);
-            }
-        }else{
-            console.error("Invalid Alert State: \"" + state + "\" for Alert \"" + alert + "\"")
-            return;
-        }
-    }else if(alerts.warnings.indexOf(alert) > -1){
-        if(state == true){
-            if(activeAlerts.warnings.indexOf(alert) > -1){
-                activeAlerts.warnings.push(alert);
-            }
-        }else if(state == false){
-            if(activeAlerts.warnings.indexOf(alert) > -1){
-                activeAlerts.warnings.splice(activeAlerts.warnings.indexOf(alert),1);
-            }
-        }else{
-            console.error("Invalid Alert State: \"" + state + "\" for Alert \"" + alert + "\"")
-            return;
-        }
-    }else{
-        console.error("Invalid Alert Fired! \"" + alert + "\"")
-        return;
-    }
-    updateAlerts();
-}*/
+
 var quotes = [
     ["WHEN YOU HAVE COPD, IT CAN BE HARD TO BREATHE","Grandpa Wolf"],
     ["its water game guise", "Dean Kamen"],
@@ -296,7 +249,7 @@ function updateIndicators() {
         $("#dsd-fmsAttached").addClass("badge-secondary").removeClass("badge-success");
     }
 
-    $("#dsd-batteryVoltage")[0].innerHTML = (data.driverstation.batteryVoltage)
+    $("#dsd-batteryVoltage")[0].innerHTML = (parseFloat(data.driverstation.batteryVoltage).toFixed(2))
 
     if(data.driverstation.isBrowningOut == true){
         $("#dsd-isBrowningOut").removeClass("badge-secondary").addClass("badge-danger");
@@ -325,27 +278,30 @@ function updateDashboard(){
         $("#quote").show();
         $("#matchHeader").hide();
 
-        if(Date.now()-lastQuoteUpdate >= 5*1000){
-            randomizeQuote();
-        }
+        if(enableDrop){
+        	$("#quote-text")[0].innerHTML = ("\"oh noes\"");
+    		$("#quote-source")[0].innerHTML = "You";
+        }else{
+        	if(Date.now()-lastQuoteUpdate >= 5*1000){
+        	    randomizeQuote();
+        	}
+    	}
         
     }
-    if(data.dashboard){
-        if(data.dashboard.blackout){
-            $("#err-blackout").show();
-            $("#warn-brownout").hide();
-            $("#warnings").hide();
+    if(enableDrop){
+        $("#err-blackout").show();
+        $("#warn-brownout").hide();
+        $("#warnings").hide();
 
-            $("#errors").show();
-            if(Math.floor(Date.now() / 300) % 2 == 0){
-                $(".container-fluid").css("backgroundColor","rgb(255,150,150)");
-            }else{
-                $(".container-fluid").css("backgroundColor","");
-            }
+        $("#errors").show();
+        if(Math.floor(Date.now() / 300) % 2 == 0){
+            $(".container-fluid").css("backgroundColor","rgb(255,150,150)");
         }else{
-            $("#err-blackout").hide();
             $(".container-fluid").css("backgroundColor","");
         }
+    }else{
+        $("#err-blackout").hide();
+        $(".container-fluid").css("backgroundColor","");
     }
 }
 
@@ -367,9 +323,9 @@ if(location.hasOwnProperty("search")){
     }
 }
 var socket = io("http://" + host + ":5024"); 
-
+var enableDrop = false;
 socket.on("connect",function(){
-    panic = false;
+    enableDrop = false;
     console.log("Connected. Sending Authentication request.")
     socket.emit("auth","dashboard")
 })
@@ -414,11 +370,19 @@ socket.on("data", function(path, value){
 socket.on("disconnect", function() {
     ready = false;
     console.warn("Lost Connection to Robot.")
-    if(data.driverstation.isBrowningOut){
-        if(data.driverstation.enabled){
-            data.dashboard.blackout = true;
-        }
-    }
+    if(data.driverstation.enabled){
+	    if(parseFloat(data.driverstation.batteryVoltage) <= 7.5){
+        	data.dashboard.alerts.blackoutwarning.active = false;
+        	data.dashboard.alerts.brownout.active = false;
+        	data.dashboard.alerts.blackoutwarning.active = false;
+            data.dashboard.alerts.blackout.active = true;
+            updateAlerts();
+	    }else{
+	    	data.dashboard.alerts.conndropped.active = true;
+            updateAlerts();
+	    }
+	    enableDrop = true;
+	}
 });
 var fDE = document.getElementById("fieldDrawing");
 $(document).ready(function(){
