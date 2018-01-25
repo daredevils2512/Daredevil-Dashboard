@@ -63,6 +63,10 @@ var genericData = function(){
 	 Update Yearly
 	\*************/
 	return {
+		"dashboard":{ // daredevil dashboard data
+			blackout:false
+
+		},
 		"driverstation":{ //check frc::DriverStation wpilibc++
 			"enabled":false, // put example of type (boolean = true, number = 1, etc)
 			"estopped":false,
@@ -131,7 +135,9 @@ function saveData(data,filepath){
 
 	})
 }
-
+var pathToWarning = {
+	"driverstation.isBrowningOut":"alerts.warnings.brownout"
+}
 function dataHandler(path,newValue){
 	if(path.replace(/\./g,"").length == 0){
 		socket.emit("err","Not allowed to set root data. >:(");
@@ -150,6 +156,9 @@ function dataHandler(path,newValue){
 		}
 	}
 	current[steps[0]] = newValue;
+	if(pathToWarning.hasOwnProperty(path)){
+		dataHandler(pathToWarning[path],newValue)
+	}
 	io.emit("data",path,newValue);
 }
 var logEntryDelay = 25; // every x milis, log.
@@ -171,6 +180,9 @@ function stopLogger(doNotSave){
 	clearInterval(logInterval);
 	logInterval = -1;
 	manualRecording = false;
+	if(doNotSave && data.driverstation.estopped){
+		dataHandler("match.startTime",-1);
+	}
 	if(doNotSave) return;
 	//save and reset logs
 	savedData[matchLog[0].match.startTime] = matchLog.copy();
@@ -228,6 +240,10 @@ io.on("connection", function(socket){
 		if(socket.role == "robot"){
 			switch(event.toLowerCase()){
 				case "enable":
+					if(data.driverstation.estopped){
+						socket.emit("err","Cannot enable while estopped");
+						return;
+					}
 					dataHandler("driverstation.enabled",true);
 					if(data.driverstation.fmsAttached){
 						if(data.match.startTime == -1){
@@ -277,10 +293,10 @@ io.on("connection", function(socket){
 			}
 		}else{
 			switch(event.toLowerCase()){
-				case "startRecording":
+				case "startrecording":
 					startRecording(true);
 				break;
-				case "stopRecording":
+				case "stoprecording":
 					if(manualRecording){
 						stopRecording();
 					}else{
@@ -288,12 +304,21 @@ io.on("connection", function(socket){
 						console.warn("DS at " + socket.handshake.address + " attempted to stop recording without manually starting a recording");
 					}
 				break;
-				case "abortRecording":
+				case "abortrecording":
 					if(manualRecording){
 						stopRecording(true);
 					}else{
 						socket.emit("err","Cannot abort recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to abort recording without manually starting a recording");
+					}
+				break;
+				case "clearalerts":
+					if(logInterval == -1){
+						data.alerts = {
+							errors:{},
+							warnings:{}
+						}
+						io.emit("data","",data);
 					}
 				break;
 				default:

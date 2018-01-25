@@ -81,6 +81,15 @@
                                 </a> 
                             </li>
                         </ul>
+                        <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"> <span>Utility</span> </h6>
+                        <ul class="nav flex-column mb-2">
+                            <li class="nav-item"> <a class="nav-link" href="javascript:void(0)" onclick="socket.emit('event','clearalerts')">
+                                <span data-feather="trash-2"></span>
+                                Clear Alerts
+                                </a> 
+                            </li>
+                            
+                        </ul>
                     </div>
                 </nav>
                 <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
@@ -94,8 +103,8 @@
                     <div class="row">
                         <div class="col-2"></div>
                         <div class="col-8">
-                            <div id="error" style="display:none" class="alert alert-danger">
-                                <h1 id="err-brownout" style="display:none" class="text-center">BROWNING OUT</h1>
+                            <div id="errors" style="display:none" class="alert alert-danger">
+                                <h1 id="err-blackout" style="display:none" class="text-center">BLACKOUT</h1>
                                 <h1 id="err-disabled" style="display:none" class="text-center">
                                     ROBOT FMS ESTOP
                                     <div style="font-size:20px;display:block">Robot was Emergency Stopped during a match while connected to the FMS.</div>
@@ -110,19 +119,30 @@
                                     <div style="font-size:20px;display:block">REPORT TO FTA ASAP<br><span style="font-size:15px">DriverStation#IsFMSAttached() reported false after being previously reported true before and after robot was enabled.</span></div>
                                 </h1>
                             </div>
-                            <div id="warning" style="display:none" class="alert alert-warning">
-                                <div id="warn-lowvoltage" style="display:none" style="font-weight:bold; font-size:20px" class="text-center">Low Battery Voltage</div>
+                            <div id="warnings" style="display:none" class="alert alert-warning">
+                                <h1 id="warn-brownout" style="display:none; margin-bottom:0px" class="text-center">BROWNOUT</h1>
                             </div>
                         </div>
                         <div class="col-2"></div>
                     </div>
                     <div class="row">
-                        <div class="col-4">
-                            <canvas id="fieldDrawing"></canvas>
+                        <div class="col-3">
+                            <div class="card">
+                                <canvas id="fieldDrawing" style="border-radius:20px"></canvas>
+                            </div>
                         </div>
-                        <div class="col-6">
-                            <h3 class="text-center">Tan Date.now();</h3>
-                            <canvas id="testChart2" width="900" height="380"></canvas>
+                        <div class="col-4">
+                            <div class="card card-body-med">
+                                <h3 class="text-center">DS Data</h3>
+                                <div class="card-body" style="padding:0px">
+                                    <span id="dsd-enabled" class="badge badge-danger">Disabled</span>
+                                    <span id="dsd-mode" class="badge badge-secondary">TeleOp</span>
+                                    <span id="dsd-dsAttached" class="badge badge-secondary">DS Attached</span>
+                                    <span id="dsd-fmsAttached" class="badge badge-secondary">FMS Attached</span>
+                                    <span id="dsd-batteryVoltage" class="badge badge-warning">0.0</span>
+                                    <span id="dsd-isBrowningOut" class="badge badge-secondary">Browning Out</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <h2>Match Statistics</h2>

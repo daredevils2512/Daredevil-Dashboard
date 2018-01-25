@@ -152,7 +152,7 @@ function resetCharts() {
         );
     }, 100);
 }*/
-
+var panic = false;
 var alerts = {
     errors: [
         "disabled",
@@ -187,15 +187,16 @@ function updateAlerts() {
         }
     }
     if(errorCount <= 0){
-        $("#error").hide();
+        $("#errors").hide();
     }else{
-        $("#error").show();
+        $("#errors").show();
     }
     if(warningCount <= 0){
         $("#warnings").hide();
     }else{
         $("#warnings").show();
     }
+    $("#err-blackout").hide();
 }
 /*function setAlertState(alert,state){
     if(alerts.errors.indexOf(alert) > -1){
@@ -243,11 +244,66 @@ var quotes = [
 var lastQuoteUpdate = Date.now();
 function randomizeQuote(){
     var quote = quotes[Math.round(Math.random()*(quotes.length-1))];
-    $("#quote-text").text("\""+quote[0]+"\"");
-    $("#quote-source").text(quote[1]);
+    $("#quote-text")[0].innerHTML = ("\""+quote[0]+"\"");
+    $("#quote-source")[0].innerHTML = (quote[1]);
     lastQuoteUpdate = Date.now();
 }
 randomizeQuote();
+
+function updateIndicators() {
+    $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable());
+    $("#matchNumber")[0].innerHTML = ("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))
+
+    $("#quote").hide();
+    $("#matchHeader").show();
+    if(data.driverstation.estopped){
+        $("#dsd-enabled").addClass("badge-danger").removeClass("badge-success")[0].innerHTML = ("ESTOPPED");
+    }else if(data.driverstation.enabled == true){
+        $("#dsd-enabled").removeClass("badge-danger").addClass("badge-success")[0].innerHTML = ("Enabled");
+    }else{
+        $("#dsd-enabled").addClass("badge-danger").removeClass("badge-success")[0].innerHTML = ("Disabled");
+        
+    }
+
+    var modeStr = "unknown..."
+
+    switch(data.driverstation.mode){
+        case "teleop":
+            modeStr = "TeleOp";
+        break;
+        case "auto":
+            modeStr = "Autonomous";
+        break;
+        case "practice":
+            modeStr = "Practice";
+        break;
+        case "test":
+            modeStr = "Testing";
+        break;
+    }
+
+    $("#dsd-mode")[0].innerHTML = (modeStr);
+
+    if(data.driverstation.dsAttached == true){
+        $("#dsd-dsAttached").removeClass("badge-secondary").addClass("badge-success");
+    }else{
+        $("#dsd-dsAttached").addClass("badge-secondary").removeClass("badge-success");
+    }
+
+    if(data.driverstation.fmsAttached == true){
+        $("#dsd-fmsAttached").removeClass("badge-secondary").addClass("badge-success");
+    }else{
+        $("#dsd-fmsAttached").addClass("badge-secondary").removeClass("badge-success");
+    }
+
+    $("#dsd-batteryVoltage")[0].innerHTML = (data.driverstation.batteryVoltage)
+
+    if(data.driverstation.isBrowningOut == true){
+        $("#dsd-isBrowningOut").removeClass("badge-secondary").addClass("badge-danger");
+    }else{
+        $("#dsd-isBrowningOut").addClass("badge-secondary").removeClass("badge-danger");
+    }
+}
 function updateDashboard(){
     if(ready){
         if(Math.floor(Date.now()/500)%2===0 && isRecording()){
@@ -255,18 +311,14 @@ function updateDashboard(){
         }else{
             $("link[rel='icon']").attr("href", "icon.png");
         }
-        $("#matchType").text(data.match.eventName + " " + mtypeToReadable());
-        $("#matchNumber").text("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))
+        
 
-        $("#quote").hide();
-        $("#matchHeader").show();
     
         if(data.match.startTime > -1){
-            $("#matchTime").text(millisTimeStr())
+            $("#matchTime")[0].innerHTML = (millisTimeStr())
         }else{
-            $("#matchTime").text("00:00:00")
+            $("#matchTime")[0].innerHTML = ("00:00:00")
         }
-        updateAlerts();
     }else{
         $("link[rel='icon']").attr("href", "icon.png");
 
@@ -277,6 +329,23 @@ function updateDashboard(){
             randomizeQuote();
         }
         
+    }
+    if(data.dashboard){
+        if(data.dashboard.blackout){
+            $("#err-blackout").show();
+            $("#warn-brownout").hide();
+            $("#warnings").hide();
+
+            $("#errors").show();
+            if(Math.floor(Date.now() / 300) % 2 == 0){
+                $(".container-fluid").css("backgroundColor","rgb(255,150,150)");
+            }else{
+                $(".container-fluid").css("backgroundColor","");
+            }
+        }else{
+            $("#err-blackout").hide();
+            $(".container-fluid").css("backgroundColor","");
+        }
     }
 }
 
@@ -300,6 +369,7 @@ if(location.hasOwnProperty("search")){
 var socket = io("http://" + host + ":5024"); 
 
 socket.on("connect",function(){
+    panic = false;
     console.log("Connected. Sending Authentication request.")
     socket.emit("auth","dashboard")
 })
@@ -315,7 +385,7 @@ socket.on("auth",function(result, message){
 socket.on("err", function(errorText) {
     console.error("Error from server: " + errorText);
 })
-
+var _recentData = false;
 socket.on("data", function(path, value){
     if(path.length == 0){
         if(!ready){
@@ -336,34 +406,50 @@ socket.on("data", function(path, value){
         }
         current[steps[0]] = value;
     }
+    updateIndicators();
+    updateAlerts();
+    _recentData = true;
 })
 
 socket.on("disconnect", function() {
     ready = false;
     console.warn("Lost Connection to Robot.")
+    if(data.driverstation.isBrowningOut){
+        if(data.driverstation.enabled){
+            data.dashboard.blackout = true;
+        }
+    }
 });
 var fDE = document.getElementById("fieldDrawing");
 $(document).ready(function(){
     var procInstance = new Processing(fDE,fieldDrawing);
 });
 function fieldDrawing(p){
+    p.size(520,400);
+    p.background(255);
     p.draw = function() {
-    	var mult = p.width/493;
-        p.background(255);
-        p.size(fDE.clientWidth,fDE.clientWidth*0.8);
-        p.fill(0);
+        
+    	//var mult = (p.width/533);
+        
+        
+        
         //p.text(p.frameCount,10,10)
+        if(!_recentData || p.frameCount == 0) return;
+        _recentData = false;
+        p.resetMatrix();
+        p.background(255);
+        p.fill(0);
         p.pushMatrix();
             p.translate(p.width/2,p.height/2)
             
             if(data.hasOwnProperty("match")){
 	            if(data.match.alliance == "blue"){
-	                p.scale(-1 * mult,1 * mult);
+	                p.scale(-1,1 );
 	            }else{
-	            	p.scale(1*mult)
+	            	p.scale(1)
 	            }
         	}else{
-        		p.scale(1*mult)
+        		p.scale(1)
         	}
             p.translate(-280,-177)
 
@@ -443,10 +529,10 @@ function fieldDrawing(p){
 
         p.popMatrix();
             p.textAlign(p.CENTER,p.TOP);
-            p.textSize(60*mult);
+            p.textSize(60);
             p.fill(0);
             p.text((data.hasOwnProperty("match"))?data.match.alliance.toUpperCase():"NO ALLIANCE",p.width/2,10)
-            p.textSize(30*mult);
+            p.textSize(30);
             p.textAlign(p.CENTER,p.BOTTOM);
             p.text((data.hasOwnProperty("match"))?data.match.gameMessage:"NO GAME MESSAGE",p.width/2,p.height-25)
             p.textSize(13);

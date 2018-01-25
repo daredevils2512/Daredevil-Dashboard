@@ -25,10 +25,11 @@ socket.on("auth",function(result, message){
     }
 })
 
-socket.on("data", function(path, val){
+socket.on("data", function(path, value){
 	if(path.length == 0){
-		data = val;
+		data = value;
 		ready = true;
+		socket.emit("data","driverstation.dsAttached",true)
 
 
 	}else{
@@ -45,6 +46,7 @@ socket.on("data", function(path, val){
         }
         current[steps[0]] = value;
   }
+  $("#voltage").val(data.driverstation.batteryVoltage);
 })
 
 socket.on("err", function(errorText) {
@@ -78,3 +80,23 @@ $("#fms-connect").click(function(){
 $("#fms-disconnect").click(function(){
     socket.emit("event","fmsdisconnect")
 })
+
+$("#voltage").change(function() {
+	var voltage = $(this).val();
+	socket.emit("data","driverstation.batteryVoltage",voltage);
+	if(voltage <= 9.5){
+
+	}else if(voltage <= 6.8){
+		socket.emit("data","driverstation.isBrowningOut",true)
+	}else{
+		socket.emit("data","driverstation.isBrowningOut",false)
+	}
+})
+
+
+function updater(){
+	if(ready){
+		
+	}
+}
+setInterval(function(){updater()},10)

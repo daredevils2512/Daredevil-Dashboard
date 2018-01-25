@@ -23,17 +23,7 @@
                 <span style="color:white">Dashboard Robot Debug</span>
             </div>
             <!--input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"-->
-            <div class="w-100 nav-item">
-                <span style="float:left">
-                </span>
-                <center>
-                    <span id="matchHeader">
-                        <h3 style="display:inline-block;font-family:consolas">
-                            <span id="matchTime">00:00:00</span> 
-                        </h3>
-                    </span>
-                </center>
-            </div>
+
         </nav>
         <div class="container-fluid">
             <div class="row">
@@ -59,6 +49,12 @@
                                     </div>
                                     <div class="input-group mb-3">
                                       <div class="input-group-prepend">
+                                        <span class="input-group-text" id="voltAdd">Voltage</span>
+                                      </div>
+                                      <input type="number" id="voltage" step="0.1" min="0.0" max="13.0" class="form-control" placeholder="12.5" aria-describedby="voltAdd">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                      <div class="input-group-prepend">
                                         <span class="input-group-text" id="addonGameMsg">Game Message</span>
                                       </div>
                                       <input type="text" class="form-control" placeholder="RRR / LLL" aria-describedby="addonGameMsg">
@@ -76,6 +72,7 @@
                                             <option value="3">Station 3</option>
                                         </select>
                                     </div>
+
                                 </div>
                             </div>
                         </div>
@@ -96,7 +93,7 @@
                                           </select>
                                           <div class="input-group-append">
                                             <button class="btn btn-outline-danger" type="button">Send</button>
-                                            <button class="btn btn-outline-danger" type="button">Recall</button>
+                                            <button class="btn btn-outline-danger" type="button">Reset</button>
                                           </div>
                                         </div>
                                     </div>
@@ -107,7 +104,7 @@
                                           </select>
                                           <div class="input-group-append">
                                             <button class="btn btn-outline-warning" type="button">Send</button>
-                                            <button class="btn btn-outline-warning" type="button">Recall</button>
+                                            <button class="btn btn-outline-warning" type="button">Reset</button>
                                           </div>
                                         </div>
                                     </div>
