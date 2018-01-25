@@ -85,7 +85,13 @@ $("#voltage").change(function() {
 	var voltage = $(this).val();
 	socket.emit("data","driverstation.batteryVoltage",voltage);
 	if(voltage <= 9.5){
-
+		//TODO: add multi stage
+		/*
+		brownout warning (9.5v)
+		browning out (7.5v)
+		blackout warning (5.5)
+		blackout (robot disconnect)
+		*/
 	}else if(voltage <= 6.8){
 		socket.emit("data","driverstation.isBrowningOut",true)
 	}else{
