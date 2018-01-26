@@ -4,8 +4,8 @@ var _recording = false;
 function isRecording() {
     return _recording || data.driverstation.enabled;
 }
-function mtypeToReadable() {
-    switch(data.match.type){
+function mtypeToReadable(type) {
+    switch(type){
         case "practice":
         return "Practice";
 
@@ -97,47 +97,7 @@ function newChart(id, settings) {
 }
 //newChart("testChart", genericLineChart());
 //newChart("testChart2", genericLineChart());
-/** LOG REPLAY **/
-var logSpeed = 25;
-var step = 0;
-var oldData = undefined;
-var playing = false;
-var updating = false;
-function runLog(){
-    if(updating) return;
-    updating = true;
-    if(step < logData.length){
-        var updatAlert = false;
-        if(!oldData){
-            oldData = JSON.parse(JSON.stringify(data));
-        }
-        if(logData[step].dashboard.alerts != data.dashboard.alerts) updatAlert = true;
-        data = logData[step];
-        updateDashboard();
 
-        if(updatAlert) updateAlerts();
-
-        updateIndicators();
-        if(playing){
-            step++;
-            setTimeout(function(){runLog()},logSpeed);
-        }
-    }else{
-        if(playing){
-            playing = false;
-            runLog();
-        }
-    }
-    updating = false;
-}
-function closeLog() {
-    data = JSON.parse(JSON.stringify(oldData));
-    oldData = undefined;
-    updateDashboard();
-    updateAlerts();
-    updateIndicators();
-}
-/** LOG REPLAY **/
 function fixedNum(num) {
     var str = num.toString();
     return (str.length == 1) ? ("0" + str) : str;
@@ -248,7 +208,7 @@ function randomizeQuote(){
 randomizeQuote();
 
 function updateIndicators() {
-    $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable());
+    $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable(data.match.type));
     $("#matchNumber")[0].innerHTML = ("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))
 
     $("#quote").hide();
@@ -347,6 +307,16 @@ function updateDashboard(){
         $("#err-blackout").hide();
         $(".container-fluid").css("backgroundColor","");
     }
+
+    if(activeLog){
+        if(Math.floor(Date.now() / 500) % 2 == 0){
+            $(".navbar").css("backgroundColor","rgb(0,0,150)");
+        }else{
+            $(".navbar").css("backgroundColor","");
+        }
+    }else{
+        $(".navbar").css("backgroundColor","");
+    }
 }
 
 setInterval(function(){updateDashboard();},10);
@@ -379,6 +349,7 @@ socket.on("auth",function(result, message){
         console.error("Authentication Error: " + message)
     }else{
         console.log("Authentication Successful.")
+        socket.emit("logList");
     }
 })
 
@@ -391,9 +362,13 @@ socket.on("data", function(path, value){
         if(!ready){
             ready = true;
         }
-        data = value;
+        if(activeLog){
+            oldData = value;
+        }else{
+            data = value;
+        }
     }else{
-        var current = data;
+        var current = (activeLog)?oldData:data;
         var steps = path.split(".");
         while(steps.length > 1){
             if(current.hasOwnProperty(steps[0])){
@@ -435,8 +410,73 @@ socket.on("log",function(data){
     playing = false;
     runLog();
     $("#replayScroll").attr("max",logData.length-1).val(0);
+    $(".replay-link").css("backgroundColor","");
+    if(activeLog){
+        $("#" + activeLog).css("backgroundColor","rgb(230,230,230)")
+    }
 });
 
+socket.on("logList",function(logs){
+    $("#matchLogs").html("");
+    for(var i in logs){
+        var entry = logs[i];
+        var error = '<span class="badge badge-danger">3 Errors</span>';
+        var warn = '<span class="badge badge-warning">1 Warning</span>';
+        $("#matchLogs").append('<li class="nav-item"> <a id="' + i + '" class="nav-link replay-link" href="javascript:void(0)" onclick="socket.emit(\'log\',' + i +'); activeLog = \'' + i + '\'"><span data-feather="file-text"></span>' + mtypeToReadable(entry.type) + ' #' + entry.number + ((entry.replay > 0)?'(Replay ' + entry.replay + ')':'') + '</a></li>')
+    }
+    feather.replace()
+})
+
+/** LOG REPLAY **/
+var activeLog;
+var logSpeed = 25;
+var logData;
+var step = 0;
+var oldData = undefined;
+var playing = false;
+var updating = false;
+function runLog(){
+    if(updating) return;
+    updating = true;
+    if(step < logData.length){
+        var updatAlert = false;
+        if(!oldData){
+            oldData = JSON.parse(JSON.stringify(data));
+            $("#exitReplay").show();
+            $("#replay-footer").show();
+        }
+        if(logData[step].dashboard.alerts != data.dashboard.alerts) updatAlert = true;
+        data = logData[step];
+        updateDashboard();
+
+        if(updatAlert) updateAlerts();
+
+        updateIndicators();
+        if(playing){
+            step++;
+            setTimeout(function(){runLog()},logSpeed);
+        }
+        $("#replayScroll").val(step);
+    }else{
+        if(playing){
+            playing = false;
+            runLog();
+        }
+    }
+    updating = false;
+}
+function closeLog() {
+    data = JSON.parse(JSON.stringify(oldData));
+    oldData = undefined;
+    activeLog = undefined;
+    updateDashboard();
+    updateAlerts();
+    updateIndicators();
+    $("#exitReplay").hide();
+    $(".replay-link").css("backgroundColor","");
+    $("#replay-footer").hide();
+}
+/** LOG REPLAY **/
 
 var fDE = document.getElementById("fieldDrawing");
 $(document).ready(function(){

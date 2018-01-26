@@ -20,25 +20,30 @@
                 <a href="javascript:void(0)" onclick="startDebugPatterns(); $(this).addClass('disabled');" data-toggle="tooltip" data-placement="bottom" title="Start Recording"><span data-feather="plus-circle" style="color:white"></span></a> <a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Abort Recording"><span data-feather="x-square" style="color:white"></span></a> <a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Save Recording"><span data-feather="save" style="color:white"></span></a> </span><span class="hide-small">Daredevil </span>Dashboard </span>
             </div>
             <!--input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"-->
+            <ul id="exitReplay" class="navbar-nav px-3" style="float: left;position: fixed;left: 16.666667%;display:none;">
+                <li class="nav-item text-nowrap">
+                  <a class="nav-link" href="javascript:void(0);" onclick="closeLog()">Exit Replay</a>
+                </li>
+              </ul>
             <div class="w-100 nav-item">
-                <span style="float:left">
-                </span>
+                
                 <center>
                     <span id="quote">
-                        <h3 id="quote-text" style="display:inline-block;">
+                        <h3 id="quote-text" style="display:inline-block;padding: 0px;margin: 0px;">
                             WHEN YOU HAVE COPD IT CAN BE HARD TO BREATHE
                         </h3>
                         <i>- <span id="quote-source">grandpa wolf</span></i>
                     </span>
                     <span id="matchHeader" style="display: none">
-                        <h3 style="display:inline-block;font-family:consolas">
-                            <span id="matchTime">00:00:00</span> 
+
+                        <h3 style="display:inline-block;font-family:consolas;padding: 0px;margin: 0px;">
+                             <span id="matchTime">00:00:00</span> 
                         </h3>
                     </span>
                 </center>
             </div>
         </nav>
-        <div class="container-fluid">
+        <div class="container-fluid" style="padding-bottom:50px">
             <div class="row">
                 <nav class="col-lg-2 col-md-3 d-none d-md-block bg-light sidebar">
                     <div class="sidebar-sticky">
@@ -60,8 +65,8 @@
                             </li>
                         </ul>
                         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"> <span>Match Data</span> </h6>
-                        <ul class="nav flex-column mb-2">
-                            <li class="nav-item"> <a class="nav-link" href="#">
+                        <ul id="matchLogs" class="nav flex-column mb-2">
+                            <!--li class="nav-item"> <a class="nav-link" href="#">
                                 <span data-feather="file-text"></span>
                                 Qual #1 <span class="badge badge-danger">3 Errors</span> <span class="badge badge-warning">1 Warning</span>
                                 </a> 
@@ -80,7 +85,7 @@
                                 <span data-feather="file-text"></span>
                                 Qual #4 <span class="badge badge-danger">3 Errors</span>
                                 </a> 
-                            </li>
+                            </li-->
                         </ul>
                         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted"> <span>Utility</span> </h6>
                         <ul class="nav flex-column mb-2">
@@ -173,6 +178,15 @@
             </div>
         </div>
         <div id="replay-footer">
+            <a href="javascript:void(0);" onclick="playing=true;runLog()">
+                <span class="feather" data-feather="play"></span>
+            </a>
+            <a href="javascript:void(0);" onclick="playing=false;">
+                <span class="feather" data-feather="pause"></span>
+            </a>
+            <a href="javascript:void(0);" onclick="step=0;runLog();">
+                <span class="feather" data-feather="skip-back"></span>
+            </a>
             <div class="range-slider">
               <input id="replayScroll" class="range-slider__range" type="range" step="1" value="0" min="0" max="1">
               <!--span class="range-slider__value">0</span-->

@@ -106,6 +106,7 @@ body {
 
 .navbar {
   background-color:rgb(180,0,0);
+  transition:background-color 130ms linear;
 }
 
 .navbar .form-control {
@@ -162,10 +163,17 @@ canvas {
 }
 
 #replay-footer{
-  background-color:rgba(0,0,0,0.25);
+  background-color:rgba(0,0,0,0.75);
   position:fixed;
   left:16.666667%;
   bottom:0px;
   right:0px;
   padding:15px;
+}
+
+#replay-footer .feather {
+  color:white;
+  width:20px;
+  height:20px;
+  margin-bottom:10px;
 }
