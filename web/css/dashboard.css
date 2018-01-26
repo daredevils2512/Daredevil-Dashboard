@@ -160,3 +160,12 @@ canvas {
     flex: 1 1 auto;
     padding: 0.25rem;
 }
+
+#replay-footer{
+  background-color:rgba(0,0,0,0.25);
+  position:fixed;
+  left:16.666667%;
+  bottom:0px;
+  right:0px;
+  padding:15px;
+}

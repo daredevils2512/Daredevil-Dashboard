@@ -82,7 +82,7 @@ $("#fms-disconnect").click(function(){
 })
 
 $("#voltage").change(function() {
-	var voltage = $(this).val();
+	var voltage = parseFloat($(this).val());
 	socket.emit("data","driverstation.batteryVoltage",voltage);
 	/*if(voltage <= 9.5){
 		//TODO: add multi stage

@@ -2,9 +2,15 @@ var http = require('http').Server();
 var io = require("socket.io")(http);
 var fs = require('fs');
 
-Object.prototype.copy = function(){
+Object.defineProperty(Object.prototype, 'copy', {
+  value: function(){
 	return JSON.parse(JSON.stringify(this));
-}
+	},
+  enumerable: false
+});
+/*Object.prototype.copy = function(){
+	return JSON.parse(JSON.stringify(this));
+}*/
 
 /**
 	DATA TEMPLATES
@@ -166,18 +172,35 @@ function loadSavedData(filepath){
 	try{
 		return JSON.parse(fs.readFileAync(filepath,"utf8"));
 	}catch(e){
-		console.error(e);
+		console.warn(e);
 		return {errorReading:true}
 	}
 }
 
 function saveData(data,filepath){
 	fs.writeFile(filepath,data,function(err){
-		console.error("failed to save data to \"" + filepath + "\"")
-		console.error(err);
+		console.warn("failed to save data to \"" + filepath + "\"")
+		console.warn(err);
 
 	})
 }
+function sendRobotError(err){
+	for(var i in io.sockets.sockets){
+		var socket = io.sockets.sockets[i];
+		if(socket.role == "robot"){
+			socket.emit("err",err);
+		}
+	}
+}
+function sendDashboardError(err){
+	for(var i in io.sockets.sockets){
+		var socket = io.sockets.sockets[i];
+		if(socket.role == "dashboard"){
+			socket.emit("err",err);
+		}
+	}
+}
+
 function dataHandler(path,newValue){
 	if(path.replace(/\./g,"").length == 0){
 		socket.emit("err","Not allowed to set root data. >:(");
@@ -190,9 +213,14 @@ function dataHandler(path,newValue){
 			current = current[steps[0]];
 			steps.splice(0,1);
 		}else{
-			console.error("Invalid path! \"" + path + "\"");
+			sendRobotError("Invalid path! \"" + path + "\"")
+			console.warn("Invalid path! \"" + path + "\"");
 			return;
 		}
+	}
+	if(typeof current[steps[0]] != typeof newValue){
+		sendRobotError("Cannot set a path to data that does not match its original type.")
+		return;
 	}
 	current[steps[0]] = newValue;
 	io.emit("data",path,newValue);
@@ -225,6 +253,16 @@ function stopLogger(doNotSave){
 	console.log("Saved match data to \"" + matchLog[0].match.startTime + "\"")
 	dataHandler("match.startTime",-1);
 	matchLog=[];
+}
+
+function getLogList(){
+	var list = {};
+	for(var i in savedData){
+		var log = savedData[i];
+		var logEntry = log[0];
+		list[i] = logEntry.match.copy();
+	}
+	return list;
 }
 io.on("connection", function(socket){
 	console.log("Connected!")
@@ -290,22 +328,23 @@ io.on("connection", function(socket){
 					if(!data.driverstation.fmsAttached){
 						dataHandler("match.startTime",-1);
 					}else{
-						dataHandler("dashboard.alerts.fmsestop",true);
+						dataHandler("dashboard.alerts.fmsestop.active",true);
 					}
 				break;
 				case "estopclear":
 					dataHandler("driverstation.estopped",false);
+					dataHandler("dashboard.alerts.fmsestop.active",false);
 				break;
 				case "fmsconnect":
 					dataHandler("driverstation.fmsAttached",true);
 					if(data.dashboard.alerts.fmsfault){
-						dataHandler("dashboard.alerts.fmsfault",false);
+						dataHandler("dashboard.alerts.fmsfault.active",false);
 					}
 				break;
 				case "fmsdisconnect":
 					dataHandler("driverstation.fmsAttached",false);
 					if(data.driverstation.enabled){
-						dataHandler("dashboard.alerts.fmsfault",true);
+						dataHandler("dashboard.alerts.fmsfault.active",true);
 					}
 				break;
 				default:
@@ -376,6 +415,27 @@ io.on("connection", function(socket){
 		}else{
 			socket.emit("err","Only the Robot can push data to the server.")
 			console.warn("Illegal Match Data Edit from " + socket.handshake.address + "!")
+		}
+	})
+	socket.on("logList", function() {
+		if(socket.role == "dashboard"){
+			socket.emit("logList",getLogList());
+		}else{
+			socket.emit("err","Robots cannot fetch the log list.")
+			console.warn("Robot attempted to fetch log list for some reason.")
+		}
+	})
+	socket.on("log", function(startTime){
+		if(socket.role == "dashboard"){
+			if(savedData.hasOwnProperty(startTime)){
+				socket.emit("log",savedData[startTime]);
+			}else{
+				socket.emit("err","Invalid log starttime")
+				console.warn("Invalid log starttime fetch attempt")
+			}
+		}else{
+			socket.emit("err","Robots cannot fetch the log list.")
+			console.warn("Robot attempted to fetch log list for some reason.")
 		}
 	})
 	socket.on("disconnect", function(){

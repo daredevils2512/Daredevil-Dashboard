@@ -10,6 +10,7 @@
         <!-- Bootstrap core CSS -->
         <link href="css/bootstrap.min.css" rel="stylesheet">
         <!-- Custom styles for this template -->
+        <link href="css/slider.css" rel="stylesheet">
         <link href="css/dashboard.css" rel="stylesheet">
     </head>
     <body>
@@ -168,6 +169,13 @@
                         </table>
                     </div>
                 </main>
+
+            </div>
+        </div>
+        <div id="replay-footer">
+            <div class="range-slider">
+              <input id="replayScroll" class="range-slider__range" type="range" step="1" value="0" min="0" max="1">
+              <!--span class="range-slider__value">0</span-->
             </div>
         </div>
         <!-- Bootstrap core JavaScript
@@ -185,6 +193,7 @@
         <script src="js/Chart.min.js"></script>
         <script src="js/socket.io.js"></script>
         <script src="js/processing.min.js"></script>
+        <script src="js/slider.js"></script>
         <script src="js/dashboard.js"></script>
     </body>
 </html>

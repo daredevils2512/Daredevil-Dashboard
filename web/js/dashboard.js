@@ -97,13 +97,57 @@ function newChart(id, settings) {
 }
 //newChart("testChart", genericLineChart());
 //newChart("testChart2", genericLineChart());
+/** LOG REPLAY **/
+var logSpeed = 25;
+var step = 0;
+var oldData = undefined;
+var playing = false;
+var updating = false;
+function runLog(){
+    if(updating) return;
+    updating = true;
+    if(step < logData.length){
+        var updatAlert = false;
+        if(!oldData){
+            oldData = JSON.parse(JSON.stringify(data));
+        }
+        if(logData[step].dashboard.alerts != data.dashboard.alerts) updatAlert = true;
+        data = logData[step];
+        updateDashboard();
 
+        if(updatAlert) updateAlerts();
+
+        updateIndicators();
+        if(playing){
+            step++;
+            setTimeout(function(){runLog()},logSpeed);
+        }
+    }else{
+        if(playing){
+            playing = false;
+            runLog();
+        }
+    }
+    updating = false;
+}
+function closeLog() {
+    data = JSON.parse(JSON.stringify(oldData));
+    oldData = undefined;
+    updateDashboard();
+    updateAlerts();
+    updateIndicators();
+}
+/** LOG REPLAY **/
 function fixedNum(num) {
     var str = num.toString();
     return (str.length == 1) ? ("0" + str) : str;
 }
 function millisTimeStr(){
-    var modTime = Date.now() - data.match.startTime;
+    var current = Date.now();
+    if(oldData){
+        current = data.match.startTime + (step * logSpeed);
+    }
+    var modTime = current - data.match.startTime;
     var hours = Math.floor(modTime / 1000 / 60 / 60);
     var minutes = Math.floor((modTime - (hours * 1000 * 60 * 60)) / 1000 / 60);
     var seconds = Math.floor((modTime - (hours * 1000 * 60 * 60) - (minutes * 1000 * 60)) / 1000);
@@ -249,7 +293,7 @@ function updateIndicators() {
         $("#dsd-fmsAttached").addClass("badge-secondary").removeClass("badge-success");
     }
 
-    $("#dsd-batteryVoltage")[0].innerHTML = (parseFloat(data.driverstation.batteryVoltage).toFixed(2))
+    $("#dsd-batteryVoltage")[0].innerHTML = (data.driverstation.batteryVoltage.toFixed(2))
 
     if(data.driverstation.isBrowningOut == true){
         $("#dsd-isBrowningOut").removeClass("badge-secondary").addClass("badge-danger");
@@ -371,7 +415,7 @@ socket.on("disconnect", function() {
     ready = false;
     console.warn("Lost Connection to Robot.")
     if(data.driverstation.enabled){
-	    if(parseFloat(data.driverstation.batteryVoltage) <= 7.5){
+	    if(data.driverstation.batteryVoltage<= 7.5){
         	data.dashboard.alerts.blackoutwarning.active = false;
         	data.dashboard.alerts.brownout.active = false;
         	data.dashboard.alerts.blackoutwarning.active = false;
@@ -384,6 +428,16 @@ socket.on("disconnect", function() {
 	    enableDrop = true;
 	}
 });
+//TODO: change to more permanent solution
+socket.on("log",function(data){
+    window.logData = data;
+    step = 0;
+    playing = false;
+    runLog();
+    $("#replayScroll").attr("max",logData.length-1).val(0);
+});
+
+
 var fDE = document.getElementById("fieldDrawing");
 $(document).ready(function(){
     var procInstance = new Processing(fDE,fieldDrawing);
@@ -505,3 +559,17 @@ function fieldDrawing(p){
 
     }
 }
+
+$("#replayScroll").on("input",function(){scrolly(this)}).change(function(){scrolly(this)})
+function scrolly(ele){
+    var newVal = parseFloat($(ele).val());
+    if(step == newVal) return;
+    step = newVal;
+    playing = false;
+    runLog();
+}
+/*setInterval(function() {
+    if(step > -1 && data != logData[step]){
+        data = logData[step];
+    }
+},10)*/
