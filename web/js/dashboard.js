@@ -357,6 +357,21 @@ socket.on("err", function(errorText) {
     console.error("Error from server: " + errorText);
 })
 var _recentData = false;
+
+function dataHandler(path, value,isSocket){
+    var current = (activeLog && isSocket)?oldData:data;
+    var steps = path.split(".");
+    while(steps.length > 1){
+        if(current.hasOwnProperty(steps[0])){
+            current = current[steps[0]];
+            steps.splice(0,1);
+        }else{
+            console.error("Invalid path! \"" + path + "\"");
+            return;
+        }
+    }
+    current[steps[0]] = value;
+}
 socket.on("data", function(path, value){
     if(path.length == 0){
         if(!ready){
@@ -368,18 +383,7 @@ socket.on("data", function(path, value){
             data = value;
         }
     }else{
-        var current = (activeLog)?oldData:data;
-        var steps = path.split(".");
-        while(steps.length > 1){
-            if(current.hasOwnProperty(steps[0])){
-                current = current[steps[0]];
-                steps.splice(0,1);
-            }else{
-                console.error("Invalid path! \"" + path + "\"");
-                return;
-            }
-        }
-        current[steps[0]] = value;
+        dataHandler(path,value,true);
     }
     updateIndicators();
     updateAlerts();
@@ -403,9 +407,12 @@ socket.on("disconnect", function() {
 	    enableDrop = true;
 	}
 });
-//TODO: change to more permanent solution
-socket.on("log",function(data){
-    window.logData = data;
+
+socket.on("log",function(dat){
+    window.logData = dat.log;
+    window.initialData = dat.initial;
+    window.data = JSON.parse(JSON.stringify(window.initialData));
+    updateAlerts();
     step = 0;
     playing = false;
     runLog();
@@ -431,8 +438,10 @@ socket.on("logList",function(logs){
 var activeLog;
 var logSpeed = 25;
 var logData;
+var lastStep = 0;
 var step = 0;
 var oldData = undefined;
+var initialData = undefined;
 var playing = false;
 var updating = false;
 function runLog(){
@@ -440,18 +449,36 @@ function runLog(){
     updating = true;
     if(step < logData.length){
         var updatAlert = false;
+        if(lastStep > step){
+            console.log("RESET >:(")
+            data = JSON.parse(JSON.stringify(initialData));
+            for(var z = 0; z < step-1; z++){
+                for(var i = 0; i < logData[z].length; i++){
+                    for(var j = 0; j < logData[z][i].length; j++){
+                        updatAlert = true;
+                        dataHandler(logData[z][i][0],logData[z][i][1])
+                    }
+                }
+            }
+        }
+        
         if(!oldData){
             oldData = JSON.parse(JSON.stringify(data));
             $("#exitReplay").show();
             $("#replay-footer").show();
         }
-        if(logData[step].dashboard.alerts != data.dashboard.alerts) updatAlert = true;
-        data = logData[step];
+        //data = logData[step];
+        for(var i = 0; i < logData[step].length; i++){
+            console.log(logData[step][i])
+            if(logData[step][i][0].indexOf("dashboard.alerts") > -1) updatAlert = true;
+            dataHandler(logData[step][i][0],logData[step][i][1])
+        }
         updateDashboard();
 
         if(updatAlert) updateAlerts();
 
         updateIndicators();
+        lastStep = step;
         if(playing){
             step++;
             setTimeout(function(){runLog()},logSpeed);

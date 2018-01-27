@@ -166,6 +166,8 @@ var savedData = {
 }
 var matchLog = [
 ];
+var dataEventLog = [
+];
 var data = genericData();
 
 function loadSavedData(filepath){
@@ -223,16 +225,23 @@ function dataHandler(path,newValue){
 		return;
 	}
 	current[steps[0]] = newValue;
+	if(initialDataPoint){
+		dataEventLog.push([path,newValue]);
+	}
 	io.emit("data",path,newValue);
 }
 var logEntryDelay = 25; // every x milis, log.
 var logInterval = -1;
 var manualRecording = false;
+var initialDataPoint = undefined;
 function startLogger(manual){
-	matchLog.push(data.copy());
+	initialDataPoint = data.copy();
+	matchLog.push(dataEventLog.copy());
+	dataEventLog = [];
 	if(manual) manualRecording = true;
 	logInterval = setInterval(function(){
-		matchLog.push(data.copy())
+		matchLog.push(dataEventLog.copy());
+		dataEventLog = [];
 		if( ( (Date.now() - data.match.startTime > matchLength 
 			&& !data.driverstation.enabled ) || 
 				data.driverstation.estopped ) && data.driverstation.fmsAttached && !manualRecording ){ // if match over OR estopped
@@ -247,20 +256,26 @@ function stopLogger(doNotSave){
 	if(doNotSave && data.driverstation.estopped){
 		dataHandler("match.startTime",-1);
 	}
-	if(doNotSave) return;
+	
+	if(doNotSave){ 
+		initialDataPoint = undefined;
+		matchLog=[];
+		return;
+	}
 	//save and reset logs
-	savedData[matchLog[0].match.startTime] = matchLog.copy();
-	console.log("Saved match data to \"" + matchLog[0].match.startTime + "\"")
+	savedData[initialDataPoint.match.startTime] = {initial:initialDataPoint,log:matchLog.copy()};
+	console.log("Saved match data to \"" + initialDataPoint.match.startTime + "\"")
 	dataHandler("match.startTime",-1);
+	initialDataPoint = undefined;
 	matchLog=[];
+	
 }
 
 function getLogList(){
 	var list = {};
 	for(var i in savedData){
 		var log = savedData[i];
-		var logEntry = log[0];
-		list[i] = logEntry.match.copy();
+		list[i] = log.initial.match.copy();
 	}
 	return list;
 }
@@ -393,8 +408,9 @@ io.on("connection", function(socket){
 		if(socket.role == "robot"){
 			if(data.dashboard.alerts.hasOwnProperty(alertName)){
 				if(data.dashboard.alerts[alertName].active != status){
-					data.dashboard.alerts[alertName].active = status;
-					io.emit("data","dashboard.alerts." + alertName + ".active",status);
+					dataHandler("dashboard.alerts." + alertName + ".active", status);
+					/*data.dashboard.alerts[alertName].active = status;
+					io.emit("data","dashboard.alerts." + alertName + ".active",status);*/
 				}
 			}else{
 				socket.emit("err","Invalid alert: " + alertName);
