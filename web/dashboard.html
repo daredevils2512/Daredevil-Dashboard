@@ -177,20 +177,25 @@
 
             </div>
         </div>
-        <div id="replay-footer">
-            <a href="javascript:void(0);" onclick="playing=true;runLog()">
-                <span class="feather" data-feather="play"></span>
-            </a>
-            <a href="javascript:void(0);" onclick="playing=false;">
-                <span class="feather" data-feather="pause"></span>
-            </a>
-            <a href="javascript:void(0);" onclick="step=0;runLog();">
-                <span class="feather" data-feather="skip-back"></span>
-            </a>
-            <div class="range-slider">
-              <input id="replayScroll" class="range-slider__range" type="range" step="1" value="0" min="0" max="1">
-              <!--span class="range-slider__value">0</span-->
-            </div>
+        <div class="row" id="replay-footer">
+        	<div class="col-lg-2 col-md-3">
+        		&nbsp;
+        	</div>
+        	<div class="col-lg-10 col-md-9">
+	            <a href="javascript:void(0);" onclick="playing=true;runLog()">
+	                <span class="feather" data-feather="play"></span>
+	            </a>
+	            <a href="javascript:void(0);" onclick="playing=false;">
+	                <span class="feather" data-feather="pause"></span>
+	            </a>
+	            <a href="javascript:void(0);" onclick="step=0;runLog();">
+	                <span class="feather" data-feather="skip-back"></span>
+	            </a>
+	            <div class="range-slider">
+	              <input id="replayScroll" class="range-slider__range" type="range" step="1" value="0" min="0" max="1">
+	              <!--span class="range-slider__value">0</span-->
+	            </div>
+	        </div>
         </div>
         <!-- Bootstrap core JavaScript
             ================================================== -->
