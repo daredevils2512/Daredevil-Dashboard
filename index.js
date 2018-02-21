@@ -2,12 +2,12 @@ var http = require('http').Server();
 var io = require("socket.io")(http);
 var fs = require('fs');
 
-Object.defineProperty(Object.prototype, 'copy', {
+/*Object.defineProperty(Object.prototype, 'copy', {
   value: function(){
 	return JSON.parse(JSON.stringify(this));
 	},
   enumerable: false
-});
+});*/
 /*Object.prototype.copy = function(){
 	return JSON.parse(JSON.stringify(this));
 }*/
@@ -236,11 +236,11 @@ var logEntryDelay = 25; // every x milis, log.
 var logInterval = -1;
 var manualRecording = false;
 function startLogger(manual){
-	matchLog.push(data.copy());
+	matchLog.push(data);
 	if(manual) manualRecording = true;
 	recordingStart = Date.now();
 	logInterval = setInterval(function(){
-		matchLog.push(data.copy())
+		matchLog.push(data)
 		if( ( (Date.now() - data.match.startTime > matchLength 
 			&& !data.driverstation.enabled ) || 
 				data.driverstation.estopped ) && data.driverstation.fmsAttached && !manualRecording ){ // if match over OR estopped
@@ -254,7 +254,7 @@ function stopLogger(doNotSave){
 	manualRecording = false;
 	if(doNotSave) return;
 	//save and reset logs
-	savedData[recordingStart] = matchLog.copy();
+	savedData[recordingStart] = matchLog;
 	
 	console.log("Saved match data to \"" + recordingStart + "\"")
 
@@ -267,7 +267,7 @@ function getLogList(){
 	for(var i in savedData){
 		var log = savedData[i];
 		var logEntry = log[0];
-		list[i] = logEntry.match.copy();
+		list[i] = logEntry.match;
 	}
 	return list;
 }
