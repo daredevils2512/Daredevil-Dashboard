@@ -290,6 +290,7 @@ io.on("connection", function(socket){
 	})
 	socket.on("data", function(path,newValue){
 		if(socket.role == "robot"){
+			console.log("robot: " + path + " --> " + newValue);
 			dataHandler(path,newValue);
 		}else{
 			socket.emit("err","Only the Robot can push data to the server.")
@@ -453,3 +454,27 @@ io.on("connection", function(socket){
 http.listen(5024, function() {
 	console.log("Listening on port 5024...")
 })
+
+var net = require("net");
+
+net.createServer( function(sock) {
+	console.log("Connection: " + sock.remoteAddress  + ":" + sock.remotePort);
+
+	sock.on('data', function(data){
+		var packets = data.toString().split(":2512:");
+		packets.splice(packets.length-1,packets.length);
+		for(var i = 0; i < packets.length; i++){
+			var packet = packets[i];
+			if(packet == "ping"){
+				//whatever
+			}else{
+				console.log(packet);
+			}
+		}
+	})
+
+	sock.on('close', function(data){
+		console.log("CLOSED: " + sock.remoteAddress + ":" + sock.remotePort);
+	})
+}).listen(5055,"127.0.0.1")
+console.log("Listening on *:5055");
