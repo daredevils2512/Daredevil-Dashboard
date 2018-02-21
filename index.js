@@ -24,7 +24,7 @@ var srx = function() {
 		"safetyEnabled":true,
 		"outputCurrent":0, //amps
 		"temperature":0,
-		"firmwareVersion":"3.x",
+		"firmwareVersion":0,// firmware versions are in number form for some reason??
 		"faults":{
 			"underVoltage":false,
 		 	"forwardLimitSwitch":false,
@@ -164,6 +164,7 @@ var savedData = {
 	// objects will consist of data
 	//key = startTime, val = array of datas
 }
+var recordingStart = -1;
 var matchLog = [
 ];
 var data = genericData();
@@ -206,6 +207,11 @@ function dataHandler(path,newValue){
 		socket.emit("err","Not allowed to set root data. >:(");
 		return;
 	}
+	if(path == "match.startTime"){
+		if(newValue == 1){
+			newValue = Date.now();
+		}
+	}
 	var current = data;
 	var steps = path.split(".");
 	while(steps.length > 1){
@@ -222,6 +228,7 @@ function dataHandler(path,newValue){
 		sendRobotError("Cannot set a path to data that does not match its original type.")
 		return;
 	}
+
 	current[steps[0]] = newValue;
 	io.emit("data",path,newValue);
 }
@@ -231,6 +238,7 @@ var manualRecording = false;
 function startLogger(manual){
 	matchLog.push(data.copy());
 	if(manual) manualRecording = true;
+	recordingStart = Date.now();
 	logInterval = setInterval(function(){
 		matchLog.push(data.copy())
 		if( ( (Date.now() - data.match.startTime > matchLength 
@@ -244,14 +252,13 @@ function stopLogger(doNotSave){
 	clearInterval(logInterval);
 	logInterval = -1;
 	manualRecording = false;
-	if(doNotSave && data.driverstation.estopped){
-		dataHandler("match.startTime",-1);
-	}
 	if(doNotSave) return;
 	//save and reset logs
-	savedData[matchLog[0].match.startTime] = matchLog.copy();
-	console.log("Saved match data to \"" + matchLog[0].match.startTime + "\"")
-	dataHandler("match.startTime",-1);
+	savedData[recordingStart] = matchLog.copy();
+	
+	console.log("Saved match data to \"" + recordingStart + "\"")
+
+	recordingStart = -1;
 	matchLog=[];
 }
 
@@ -356,11 +363,11 @@ io.on("connection", function(socket){
 		}else{
 			switch(event.toLowerCase()){
 				case "startrecording":
-					startRecording(true);
+					startLogger(true);
 				break;
 				case "stoprecording":
 					if(manualRecording){
-						stopRecording();
+						stopLogger();
 					}else{
 						socket.emit("err","Cannot stop recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to stop recording without manually starting a recording");
@@ -368,7 +375,7 @@ io.on("connection", function(socket){
 				break;
 				case "abortrecording":
 					if(manualRecording){
-						stopRecording(true);
+						stopLogger(true);
 					}else{
 						socket.emit("err","Cannot abort recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to abort recording without manually starting a recording");
@@ -468,7 +475,9 @@ net.createServer( function(sock) {
 			if(packet == "ping"){
 				//whatever
 			}else{
-				console.log(packet);
+				var dataArray = JSON.parse(packet);
+				//console.log(dataArray[0])
+				dataHandler(dataArray[0],dataArray[1]);
 			}
 		}
 	})

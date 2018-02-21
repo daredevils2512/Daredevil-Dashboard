@@ -209,7 +209,7 @@ randomizeQuote();
 
 function updateIndicators() {
     $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable(data.match.type));
-    $("#matchNumber")[0].innerHTML = ("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))
+    $("#matchNumber")[0].innerHTML = (data.match.number > 0)?(("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))):"";
 
     $("#quote").hide();
     $("#matchHeader").show();
@@ -253,7 +253,7 @@ function updateIndicators() {
         $("#dsd-fmsAttached").addClass("badge-secondary").removeClass("badge-success");
     }
 
-    $("#dsd-batteryVoltage")[0].innerHTML = (data.driverstation.batteryVoltage.toFixed(2))
+    $("#dsd-batteryVoltage")[0].innerHTML = (data.driverstation.batteryVoltage.toFixed(4))
 
     if(data.driverstation.isBrowningOut == true){
         $("#dsd-isBrowningOut").removeClass("badge-secondary").addClass("badge-danger");

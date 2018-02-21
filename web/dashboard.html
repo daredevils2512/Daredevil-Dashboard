@@ -17,13 +17,21 @@
         <nav class="navbar navbar-dark sticky-top flex-md-nowrap p-0">
             <div class="navbar-brand col-lg-2 col-md-3 mr-0"> <span style="color:white">
                 <span class="dashboard-buttons">
-                <a href="javascript:void(0)" onclick="startDebugPatterns(); $(this).addClass('disabled');" data-toggle="tooltip" data-placement="bottom" title="Start Recording"><span data-feather="plus-circle" style="color:white"></span></a> <a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Abort Recording"><span data-feather="x-square" style="color:white"></span></a> <a href="javascript:void(0)" data-toggle="tooltip" data-placement="bottom" title="Save Recording"><span data-feather="save" style="color:white"></span></a> </span><span class="hide-small">Daredevil </span>Dashboard </span>
+                <a id="startrec" href="javascript:void(0)" onclick="socket.emit('event','startrecording'); $(this).addClass('disabled');" data-toggle="tooltip" data-placement="bottom" title="Start Recording"><span data-feather="plus-circle" style="color:white"></span></a> 
+                <a id="abortrec" href="javascript:void(0)" onclick="socket.emit('event','abortrecording');" data-toggle="tooltip" data-placement="bottom" title="Abort Recording"><span data-feather="x-square" style="color:white"></span></a> 
+                <a id="stoprec" href="javascript:void(0)" onclick="socket.emit('event','stoprecording'); $('#startrec').removeClass('disabled');" data-toggle="tooltip" data-placement="bottom" title="Save Recording"><span data-feather="save" style="color:white"></span></a> 
+            </span><span class="hide-small">Daredevil </span>Dashboard </span>
             </div>
             <!--input class="form-control form-control-dark w-100" type="text" placeholder="Search" aria-label="Search"-->
-            <ul id="exitReplay" class="navbar-nav px-3" style="float: left;position: fixed;left: 16.666667%;display:none;">
+            <ul id="exitReplay" class="navbar-nav px-3" style="float: right;position: fixed;right: 15px;display:none;">
                 <li class="nav-item text-nowrap">
                   <a class="nav-link" href="javascript:void(0);" onclick="closeLog()">Exit Replay</a>
                 </li>
+              </ul>
+              <ul class="navbar-nav px-3" style="float: left;position: absolute; left:calc(16.666% + 5px)">
+              	<li class="nav-item text-nowrap">
+              		<span id="matchType">Robot Inactive</span> <span id="matchNumber"></span>
+              	</li>
               </ul>
             <div class="w-100 nav-item">
                 
@@ -99,9 +107,6 @@
                     </div>
                 </nav>
                 <main role="main" class="col-md-9 ml-sm-auto col-lg-10 pt-3 px-4">
-                    <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-3 border-bottom">
-                        <h2><span id="matchType">Robot Inactive</span> <span id="matchNumber"></span></h2>
-                    </div>
                     <div class="row">
                         <div class="col-2"></div>
                         <div class="col-8">
@@ -177,7 +182,7 @@
 
             </div>
         </div>
-        <div id="replay-footer">
+        <div id="replay-footer" style="display:none">
             <a href="javascript:void(0);" onclick="playing=true;runLog()">
                 <span class="feather" data-feather="play"></span>
             </a>
