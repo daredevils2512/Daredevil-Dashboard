@@ -24,7 +24,7 @@ var srx = function() {
 		"safetyEnabled":true,
 		"outputCurrent":0, //amps
 		"temperature":0,
-		"firmwareVersion":"3.x",
+		"firmwareVersion":0, // versions are numbers i guess
 		"faults":{
 			"underVoltage":false,
 		 	"forwardLimitSwitch":false,
@@ -207,6 +207,16 @@ function dataHandler(path,newValue){
 	if(path.replace(/\./g,"").length == 0){
 		socket.emit("err","Not allowed to set root data. >:(");
 		return;
+	}
+	if(path == "match.startTime"){
+		if(newValue == 1){
+			newValue = Date.now();
+		}
+	}
+	if(path == "match.startTime"){
+		if(newValue == 1){
+			newValue = Date.now();
+		}
 	}
 	var current = data;
 	var steps = path.split(".");
@@ -469,3 +479,29 @@ io.on("connection", function(socket){
 http.listen(5024, function() {
 	console.log("Listening on port 5024...")
 })
+
+var net = require("net");
+
+net.createServer( function(sock) {
+	console.log("Connection: " + sock.remoteAddress  + ":" + sock.remotePort);
+
+	sock.on('data', function(data){
+		var packets = data.toString().split(":2512:");
+		packets.splice(packets.length-1,packets.length);
+		for(var i = 0; i < packets.length; i++){
+			var packet = packets[i];
+			if(packet == "ping"){
+				//whatever
+			}else{
+				var dataArray = JSON.parse(packet);
+				//console.log(dataArray[0])
+				dataHandler(dataArray[0],dataArray[1]);
+			}
+		}
+	})
+
+	sock.on('close', function(data){
+		console.log("CLOSED: " + sock.remoteAddress + ":" + sock.remotePort);
+	})
+}).listen(5055,"127.0.0.1")
+console.log("Listening on *:5055");})
