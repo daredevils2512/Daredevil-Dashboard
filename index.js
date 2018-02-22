@@ -380,11 +380,11 @@ io.on("connection", function(socket){
 		}else{
 			switch(event.toLowerCase()){
 				case "startrecording":
-					startRecording(true);
+					startLogger(true);
 				break;
 				case "stoprecording":
 					if(manualRecording){
-						stopRecording();
+						stopLogger();
 					}else{
 						socket.emit("err","Cannot stop recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to stop recording without manually starting a recording");
@@ -392,7 +392,7 @@ io.on("connection", function(socket){
 				break;
 				case "abortrecording":
 					if(manualRecording){
-						stopRecording(true);
+						stopLogger(true);
 					}else{
 						socket.emit("err","Cannot abort recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to abort recording without manually starting a recording");
@@ -504,4 +504,4 @@ net.createServer( function(sock) {
 		console.log("CLOSED: " + sock.remoteAddress + ":" + sock.remotePort);
 	})
 }).listen(5055,"127.0.0.1")
-console.log("Listening on *:5055");})
+console.log("Listening on *:5055");

@@ -165,7 +165,7 @@ canvas {
 #replay-footer{
   background-color:rgba(0,0,0,0.75);
   position:fixed;
-  left:0px;
+  left:16.666666666%;
   bottom:0px;
   right:0px;
   padding:15px;
