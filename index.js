@@ -2,12 +2,12 @@ var http = require('http').Server();
 var io = require("socket.io")(http);
 var fs = require('fs');
 
-/*Object.defineProperty(Object.prototype, 'copy', {
+Object.defineProperty(Object.prototype, 'copy', {
   value: function(){
 	return JSON.parse(JSON.stringify(this));
 	},
   enumerable: false
-});*/
+});
 /*Object.prototype.copy = function(){
 	return JSON.parse(JSON.stringify(this));
 }*/
@@ -24,7 +24,7 @@ var srx = function() {
 		"safetyEnabled":true,
 		"outputCurrent":0, //amps
 		"temperature":0,
-		"firmwareVersion":0,// firmware versions are in number form for some reason??
+		"firmwareVersion":"3.x",
 		"faults":{
 			"underVoltage":false,
 		 	"forwardLimitSwitch":false,
@@ -164,8 +164,9 @@ var savedData = {
 	// objects will consist of data
 	//key = startTime, val = array of datas
 }
-var recordingStart = -1;
 var matchLog = [
+];
+var dataEventLog = [
 ];
 var data = genericData();
 
@@ -207,11 +208,6 @@ function dataHandler(path,newValue){
 		socket.emit("err","Not allowed to set root data. >:(");
 		return;
 	}
-	if(path == "match.startTime"){
-		if(newValue == 1){
-			newValue = Date.now();
-		}
-	}
 	var current = data;
 	var steps = path.split(".");
 	while(steps.length > 1){
@@ -228,19 +224,24 @@ function dataHandler(path,newValue){
 		sendRobotError("Cannot set a path to data that does not match its original type.")
 		return;
 	}
-
 	current[steps[0]] = newValue;
+	if(initialDataPoint){
+		dataEventLog.push([path,newValue]);
+	}
 	io.emit("data",path,newValue);
 }
 var logEntryDelay = 25; // every x milis, log.
 var logInterval = -1;
 var manualRecording = false;
+var initialDataPoint = undefined;
 function startLogger(manual){
-	matchLog.push(data);
+	initialDataPoint = data.copy();
+	matchLog.push(dataEventLog.copy());
+	dataEventLog = [];
 	if(manual) manualRecording = true;
-	recordingStart = Date.now();
 	logInterval = setInterval(function(){
-		matchLog.push(data)
+		matchLog.push(dataEventLog.copy());
+		dataEventLog = [];
 		if( ( (Date.now() - data.match.startTime > matchLength 
 			&& !data.driverstation.enabled ) || 
 				data.driverstation.estopped ) && data.driverstation.fmsAttached && !manualRecording ){ // if match over OR estopped
@@ -252,22 +253,29 @@ function stopLogger(doNotSave){
 	clearInterval(logInterval);
 	logInterval = -1;
 	manualRecording = false;
-	if(doNotSave) return;
-	//save and reset logs
-	savedData[recordingStart] = matchLog;
+	if(doNotSave && data.driverstation.estopped){
+		dataHandler("match.startTime",-1);
+	}
 	
-	console.log("Saved match data to \"" + recordingStart + "\"")
-
-	recordingStart = -1;
+	if(doNotSave){ 
+		initialDataPoint = undefined;
+		matchLog=[];
+		return;
+	}
+	//save and reset logs
+	savedData[initialDataPoint.match.startTime] = {initial:initialDataPoint,log:matchLog.copy()};
+	console.log("Saved match data to \"" + initialDataPoint.match.startTime + "\"")
+	dataHandler("match.startTime",-1);
+	initialDataPoint = undefined;
 	matchLog=[];
+	
 }
 
 function getLogList(){
 	var list = {};
 	for(var i in savedData){
 		var log = savedData[i];
-		var logEntry = log[0];
-		list[i] = logEntry.match;
+		list[i] = log.initial.match.copy();
 	}
 	return list;
 }
@@ -297,7 +305,6 @@ io.on("connection", function(socket){
 	})
 	socket.on("data", function(path,newValue){
 		if(socket.role == "robot"){
-			console.log("robot: " + path + " --> " + newValue);
 			dataHandler(path,newValue);
 		}else{
 			socket.emit("err","Only the Robot can push data to the server.")
@@ -363,11 +370,11 @@ io.on("connection", function(socket){
 		}else{
 			switch(event.toLowerCase()){
 				case "startrecording":
-					startLogger(true);
+					startRecording(true);
 				break;
 				case "stoprecording":
 					if(manualRecording){
-						stopLogger();
+						stopRecording();
 					}else{
 						socket.emit("err","Cannot stop recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to stop recording without manually starting a recording");
@@ -375,7 +382,7 @@ io.on("connection", function(socket){
 				break;
 				case "abortrecording":
 					if(manualRecording){
-						stopLogger(true);
+						stopRecording(true);
 					}else{
 						socket.emit("err","Cannot abort recording without a manual start.")
 						console.warn("DS at " + socket.handshake.address + " attempted to abort recording without manually starting a recording");
@@ -401,8 +408,9 @@ io.on("connection", function(socket){
 		if(socket.role == "robot"){
 			if(data.dashboard.alerts.hasOwnProperty(alertName)){
 				if(data.dashboard.alerts[alertName].active != status){
-					data.dashboard.alerts[alertName].active = status;
-					io.emit("data","dashboard.alerts." + alertName + ".active",status);
+					dataHandler("dashboard.alerts." + alertName + ".active", status);
+					/*data.dashboard.alerts[alertName].active = status;
+					io.emit("data","dashboard.alerts." + alertName + ".active",status);*/
 				}
 			}else{
 				socket.emit("err","Invalid alert: " + alertName);
@@ -461,29 +469,3 @@ io.on("connection", function(socket){
 http.listen(5024, function() {
 	console.log("Listening on port 5024...")
 })
-
-var net = require("net");
-
-net.createServer( function(sock) {
-	console.log("Connection: " + sock.remoteAddress  + ":" + sock.remotePort);
-
-	sock.on('data', function(data){
-		var packets = data.toString().split(":2512:");
-		packets.splice(packets.length-1,packets.length);
-		for(var i = 0; i < packets.length; i++){
-			var packet = packets[i];
-			if(packet == "ping"){
-				//whatever
-			}else{
-				var dataArray = JSON.parse(packet);
-				//console.log(dataArray[0])
-				dataHandler(dataArray[0],dataArray[1]);
-			}
-		}
-	})
-
-	sock.on('close', function(data){
-		console.log("CLOSED: " + sock.remoteAddress + ":" + sock.remotePort);
-	})
-}).listen(5055,"127.0.0.1")
-console.log("Listening on *:5055");
