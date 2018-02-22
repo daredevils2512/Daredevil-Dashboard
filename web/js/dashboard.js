@@ -105,15 +105,25 @@ function fixedNum(num) {
 function millisTimeStr(){
     var current = Date.now();
     if(oldData){
-        current = data.match.startTime + (step * logSpeed);
+        current = data.recordingStart + data.recordingTimeOffset + (step * logSpeed);
     }
-    var modTime = current - data.match.startTime;
-    var hours = Math.floor(modTime / 1000 / 60 / 60);
-    var minutes = Math.floor((modTime - (hours * 1000 * 60 * 60)) / 1000 / 60);
-    var seconds = Math.floor((modTime - (hours * 1000 * 60 * 60) - (minutes * 1000 * 60)) / 1000);
-    var millis = Math.floor(modTime - (hours * 1000 * 60 * 60) - (minutes * 1000 * 60) - (seconds * 1000))
+    var modTime = (current - ((data.recordingStart)?data.recordingStart:0)) + ((data.recordingTimeOffset)?data.recordingTimeOffset:0);
+    
+    var millis = modTime % 1000;
 
-    var timeStr = fixedNum(Math.floor(minutes)) + ":" + fixedNum(Math.floor(seconds)) + ":" + fixedNum(Math.floor(millis).toString()).substring(0, 2)
+        modTime = (modTime - millis) / 1000;
+
+    var seconds = modTime%60;
+
+        modTime = (modTime - seconds) / 60;
+
+    var minutes = modTime % 60;
+
+    var hours = (modTime - minutes) / 60;
+    
+
+
+    var timeStr = fixedNum(Math.floor(minutes)) + ":" + fixedNum(Math.floor(seconds)) + ":" + fixedNum(Math.floor(millis/10).toString()).substring(0, 2)
     return timeStr;
 }
 function addData(chart, time, data) {
@@ -444,18 +454,18 @@ var oldData = undefined;
 var initialData = undefined;
 var playing = false;
 var updating = false;
-function runLog(){
+function runLog(dontTimeout){
     if(updating) return;
     updating = true;
-    if(step < logData.length){
+    if(step < logData.length){           
+
         var updatAlert = false;
-        if(lastStep > step){
-            console.log("RESET >:(")
+        if(lastStep > step || Math.abs(step - lastStep) > 1 || dontTimeout){
+            updatAlert = true;
             data = JSON.parse(JSON.stringify(initialData));
             for(var z = 0; z < step-1; z++){
                 for(var i = 0; i < logData[z].length; i++){
                     for(var j = 0; j < logData[z][i].length; j++){
-                        updatAlert = true;
                         dataHandler(logData[z][i][0],logData[z][i][1])
                     }
                 }
@@ -469,7 +479,6 @@ function runLog(){
         }
         //data = logData[step];
         for(var i = 0; i < logData[step].length; i++){
-            console.log(logData[step][i])
             if(logData[step][i][0].indexOf("dashboard.alerts") > -1) updatAlert = true;
             dataHandler(logData[step][i][0],logData[step][i][1])
         }
@@ -479,7 +488,7 @@ function runLog(){
 
         updateIndicators();
         lastStep = step;
-        if(playing){
+        if(playing && !dontTimeout){
             step++;
             setTimeout(function(){runLog()},logSpeed);
         }

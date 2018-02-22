@@ -2,12 +2,12 @@ var http = require('http').Server();
 var io = require("socket.io")(http);
 var fs = require('fs');
 
-Object.defineProperty(Object.prototype, 'copy', {
+/*Object.defineProperty(Object.prototype, 'copy', {
   value: function(){
 	return JSON.parse(JSON.stringify(this));
 	},
   enumerable: false
-});
+});*/
 /*Object.prototype.copy = function(){
 	return JSON.parse(JSON.stringify(this));
 }*/
@@ -245,12 +245,16 @@ var logInterval = -1;
 var manualRecording = false;
 var initialDataPoint = undefined;
 function startLogger(manual){
-	initialDataPoint = data.copy();
-	matchLog.push(dataEventLog.copy());
+	initialDataPoint = JSON.parse(JSON.stringify(data));
+	initialDataPoint.recordingStart = Date.now();
+	if(initialDataPoint.match.startTime != -1){
+		initialDataPoint.recordingTimeOffset = Date.now() - initialDataPoint.match.startTime;
+	}
+	matchLog.push(dataEventLog);
 	dataEventLog = [];
 	if(manual) manualRecording = true;
 	logInterval = setInterval(function(){
-		matchLog.push(dataEventLog.copy());
+		matchLog.push(dataEventLog);
 		dataEventLog = [];
 		if( ( (Date.now() - data.match.startTime > matchLength 
 			&& !data.driverstation.enabled ) || 
@@ -263,9 +267,9 @@ function stopLogger(doNotSave){
 	clearInterval(logInterval);
 	logInterval = -1;
 	manualRecording = false;
-	if(doNotSave && data.driverstation.estopped){
+	/*if(doNotSave && data.driverstation.estopped){
 		dataHandler("match.startTime",-1);
-	}
+	}*/
 	
 	if(doNotSave){ 
 		initialDataPoint = undefined;
@@ -273,9 +277,10 @@ function stopLogger(doNotSave){
 		return;
 	}
 	//save and reset logs
-	savedData[initialDataPoint.match.startTime] = {initial:initialDataPoint,log:matchLog.copy()};
-	console.log("Saved match data to \"" + initialDataPoint.match.startTime + "\"")
-	dataHandler("match.startTime",-1);
+	savedData[initialDataPoint.recordingStart] = {initial:initialDataPoint,log:matchLog};
+	console.log("Saved match data to \"" + initialDataPoint.recordingStart + "\"")
+	io.emit("logList",getLogList());
+	//dataHandler("match.startTime",-1);
 	initialDataPoint = undefined;
 	matchLog=[];
 	
@@ -285,7 +290,7 @@ function getLogList(){
 	var list = {};
 	for(var i in savedData){
 		var log = savedData[i];
-		list[i] = log.initial.match.copy();
+		list[i] = log.initial.match;
 	}
 	return list;
 }
