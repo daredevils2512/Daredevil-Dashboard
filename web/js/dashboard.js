@@ -22,21 +22,7 @@ function mtypeToReadable(type) {
         return "Unknown Match Type";
     }
 }
-/*function initMatch(data) {
-    match.active = true;
-    match.gameStarted = false;
-    match.matchType = data.matchType;
-    match.matchNumber = data.matchNumber;
-    match.replayNumber = data.replayNumber;
-    match.eventName = data.eventName;
-    $("#matchType").text(mtypeToReadable());
-    $("#matchNumber").text("#" + data.matchNumber + ((match.replayNumber >= 1)?" (Replay #"+match.replayNumber+")":""))
-}
-function startMatch(){
-    match.startTime = Date.now();
-    match.gameStarted = true;
-    match.active = true;
-}*/
+
 var genericLineChart = function() {
     return {
         type: 'line',
@@ -86,15 +72,63 @@ var genericLineChart = function() {
 
 var charts = [];
 
-function newChart(id, settings) {
-    var ctx = document.getElementById(id);
+function newChart(element, settings) {
+    var ctx = element;
     var chart = new Chart(ctx, settings);
     chart.trackedData = [];
     chart.trackedDataOffset = 0;
     chart.timeCap = 5;
+    chart.startTime = Date.now();
     charts.push(chart);
     return chart;
 }
+function addData(chart, time, data) {
+    chart.trackedData.push(time);
+    chart.data.labels.push(millisTimeStr(time - chart.startTime));
+    chart.data.datasets[0].data.push(data);
+    if (time - chart.trackedData[chart.trackedDataOffset] > (chart.timeCap) * 1000) {
+        chart.data.labels.splice(0, 1);
+        chart.data.datasets[0].data.splice(0, 1);
+        chart.trackedDataOffset++;
+    }
+    chart.update(0);
+}
+
+function resetCharts() {
+    chartOffset = Date.now();
+    for (var i = 0; i < charts.length; i++) {
+        var chart = charts[i];
+        chart.data.labels = [];
+        chart.data.datasets[0].data = [];
+        chart.trackedDataOffset = chart.trackedData.length - 1;
+        chart.startTime = Date.now();
+    }
+
+}
+
+var dOSettings = genericLineChart();
+var dOChart = newChart($("[dash-graph-id=\"drivetrainOutput\"]")[0],dOSettings);
+dOChart.timeCap = 15;
+setInterval(function(){
+    if(!ready) return;
+    var combinedCurrentDraw = data.drivetrain.motorControllers.frontLeft.outputCurrent + 
+        data.drivetrain.motorControllers.frontRight.outputCurrent + 
+        data.drivetrain.motorControllers.backLeft.outputCurrent + 
+        data.drivetrain.motorControllers.backRight.outputCurrent;
+    if(combinedCurrentDraw > 50){
+        if(combinedCurrentDraw > 90){
+            dOChart.data.datasets[0].backgroundColor="rgba(255,0,0,0.25)";
+            dOChart.data.datasets[0].borderColor="rgb(255,0,0)"
+        }else{
+            dOChart.data.datasets[0].backgroundColor="rgba(255,255,0,0.25)";
+            dOChart.data.datasets[0].borderColor="rgb(255,255,0)"
+        }
+    }else{
+        dOChart.data.datasets[0].backgroundColor="rgba(0,255,0,0.25)";
+        dOChart.data.datasets[0].borderColor="rgb(0,255,0)"
+    }
+    addData(dOChart,Date.now(),combinedCurrentDraw);
+},30)
 //newChart("testChart", genericLineChart());
 //newChart("testChart2", genericLineChart());
 
@@ -102,13 +136,13 @@ function fixedNum(num) {
     var str = num.toString();
     return (str.length == 1) ? ("0" + str) : str;
 }
-function millisTimeStr(){
+function millisTimeStr(forceTime){
     var current = Date.now();
     if(oldData){
-        current = data.recordingStart + data.recordingTimeOffset + (step * logSpeed);
+        current = data.recordingStart + ((data.recordingTimeOffset)?data.recordingTimeOffset:0) + (step * logSpeed);
     }
     var modTime = (current - ((data.recordingStart)?data.recordingStart:((data.match.startTime)?data.match.startTime:0))) + ((data.recordingTimeOffset)?data.recordingTimeOffset:0);
-    
+    if(forceTime) modTime = forceTime;
     var millis = modTime % 1000;
 
         modTime = (modTime - millis) / 1000;
@@ -126,46 +160,8 @@ function millisTimeStr(){
     var timeStr = ( (hrs > 0)?(fixedNum(Math.floor(hrs)) +":"):"" ) + fixedNum(Math.floor(minutes)) + ":" + fixedNum(Math.floor(seconds)) + ":" + fixedNum(Math.floor(millis/10).toString()).substring(0, 2)
     return timeStr;
 }
-function addData(chart, time, data) {
-    chart.trackedData.push(time);
-    chart.data.labels.push(millisTimeStr(time));
-    chart.data.datasets[0].data.push(data);
-    if (time - chart.trackedData[chart.trackedDataOffset] > (chart.timeCap) * 1000) {
-        chart.data.labels.splice(0, 1);
-        chart.data.datasets[0].data.splice(0, 1);
-        chart.trackedDataOffset++;
-    }
-    chart.update(0);
-}
 
-function resetCharts() {
-    chartOffset = Date.now();
-    for (var i = 0; i < charts.length; i++) {
-        var chart = charts[i];
-        chart.data.labels = [];
-        chart.data.datasets[0].data = [];
-        chart.trackedDataOffset = chart.trackedData.length - 1;
-    }
 
-}
-
-/*function startDebugPatterns() {
-    
-    setInterval(function() {
-        addData(
-            charts[0],
-            Date.now(),
-            Math.sin(Date.now() / 150)
-        );
-    }, 100);
-    setInterval(function() {
-        addData(
-            charts[1],
-            Date.now(),
-            Math.tan(Date.now() / 150)
-        );
-    }, 100);
-}*/
 var alertContents = {
     "fmsestop":"ROBOT FMS ESTOP <div style=\"font-size:20px;display:block\">Robot was Emergency Stopped during a match while connected to the FMS.",
     "dsoffline":"DRIVER STATION OFFLINE",
@@ -270,6 +266,17 @@ function updateIndicators() {
     }else{
         $("#dsd-isBrowningOut").addClass("badge-secondary").removeClass("badge-danger");
     }
+    var dats = $("[dash-data]");
+    for(var i = 0; i < dats.length; i++){
+        if(typeof dats[i] == "number")continue;
+        var pb = $(dats[i]).attr("dash-data").split(".");
+        var dat = data[pb[0]]
+        for(var z = 1; z < pb.length; z++){
+            dat = dat[pb[z]]
+        }
+        
+        $(dats[i]).text(dat.toFixed(3));
+    }
 }
 function updateDashboard(){
     if(ready){
@@ -281,11 +288,12 @@ function updateDashboard(){
         
 
     
-        if(data.match.startTime > -1){
+        if(data.match.startTime > -1 || data.recordingStart){
             $("#matchTime")[0].innerHTML = (millisTimeStr())
         }else{
             $("#matchTime")[0].innerHTML = ("00:00:00")
         }
+        
     }else{
         $("link[rel='icon']").attr("href", "icon.png");
 

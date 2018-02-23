@@ -495,7 +495,12 @@ net.createServer( function(sock) {
 			if(packet == "ping"){
 				//whatever
 			}else{
-				var dataArray = JSON.parse(packet);
+				try{				
+					var dataArray = JSON.parse(packet);
+				}catch(e){
+					console.log("Invalid Packet! " + packet);
+					return;
+				}
 				//console.log(dataArray[0])
 				dataHandler(dataArray[0],dataArray[1]);
 			}
