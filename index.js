@@ -209,11 +209,7 @@ function dataHandler(path,newValue){
 		return;
 	}
 	if(path == "match.startTime"){
-		if(newValue == 1){
-			newValue = Date.now();
-		}
-	}
-	if(path == "match.startTime"){
+		console.log("initalized start time")
 		if(newValue == 1){
 			newValue = Date.now();
 		}

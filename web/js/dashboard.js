@@ -1,4 +1,4 @@
-var data = {}; // fetch from server
+var data = undefined; // fetch from server
 var ready = false;
 var _recording = false;
 function isRecording() {
@@ -383,6 +383,7 @@ function dataHandler(path, value,isSocket){
     current[steps[0]] = value;
 }
 socket.on("data", function(path, value){
+
     if(path.length == 0){
         if(!ready){
             ready = true;
@@ -392,9 +393,10 @@ socket.on("data", function(path, value){
         }else{
             data = value;
         }
-    }else{
+    }else if(ready){
         dataHandler(path,value,true);
     }
+    if(!ready) return;
     updateIndicators();
     updateAlerts();
     _recentData = true;
