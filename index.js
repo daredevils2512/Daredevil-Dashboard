@@ -247,6 +247,7 @@ var initialDataPoint = undefined;
 function startLogger(manual){
 	initialDataPoint = JSON.parse(JSON.stringify(data));
 	initialDataPoint.recordingStart = Date.now();
+	console.log("Recording started here: '" + initialDataPoint.recordingStart + "'");
 	if(initialDataPoint.match.startTime != -1){
 		initialDataPoint.recordingTimeOffset = Date.now() - initialDataPoint.match.startTime;
 	}

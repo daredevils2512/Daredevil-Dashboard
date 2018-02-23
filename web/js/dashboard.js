@@ -107,7 +107,7 @@ function millisTimeStr(){
     if(oldData){
         current = data.recordingStart + data.recordingTimeOffset + (step * logSpeed);
     }
-    var modTime = (current - ((data.recordingStart)?data.recordingStart:0)) + ((data.recordingTimeOffset)?data.recordingTimeOffset:0);
+    var modTime = (current - ((data.recordingStart)?data.recordingStart:((data.match.startTime)?data.match.startTime:0))) + ((data.recordingTimeOffset)?data.recordingTimeOffset:0);
     
     var millis = modTime % 1000;
 
@@ -119,11 +119,11 @@ function millisTimeStr(){
 
     var minutes = modTime % 60;
 
-    var hours = (modTime - minutes) / 60;
+    var hrs = (modTime - minutes) / 60;
     
 
 
-    var timeStr = fixedNum(Math.floor(minutes)) + ":" + fixedNum(Math.floor(seconds)) + ":" + fixedNum(Math.floor(millis/10).toString()).substring(0, 2)
+    var timeStr = ( (hrs > 0)?(fixedNum(Math.floor(hrs)) +":"):"" ) + fixedNum(Math.floor(minutes)) + ":" + fixedNum(Math.floor(seconds)) + ":" + fixedNum(Math.floor(millis/10).toString()).substring(0, 2)
     return timeStr;
 }
 function addData(chart, time, data) {
@@ -439,7 +439,7 @@ socket.on("logList",function(logs){
         var entry = logs[i];
         var error = '<span class="badge badge-danger">3 Errors</span>';
         var warn = '<span class="badge badge-warning">1 Warning</span>';
-        $("#matchLogs").append('<li class="nav-item"> <a id="' + i + '" class="nav-link replay-link" href="javascript:void(0)" onclick="socket.emit(\'log\',' + i +'); activeLog = \'' + i + '\'"><span data-feather="file-text"></span>' + mtypeToReadable(entry.type) + ' #' + entry.number + ((entry.replay > 0)?'(Replay ' + entry.replay + ')':'') + '</a></li>')
+        $("#matchLogs").append('<li class="nav-item"> <a id="' + i + '" class="nav-link replay-link" href="javascript:void(0)" onclick="socket.emit(\'log\',' + i +'); activeLog = \'' + i + '\'"><span data-feather="file-text"></span>' + mtypeToReadable(entry.type) + ((entry.number)?(' #' + entry.number + ((entry.replay > 0)?'(Replay ' + entry.replay + ')':'')):"") + '</a></li>')
     }
     feather.replace()
 })
