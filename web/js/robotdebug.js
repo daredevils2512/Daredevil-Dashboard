@@ -3,6 +3,7 @@ $(function () {
     trigger:"hover"
   })
 })
+$("#voltage").val(12)
 var data = {};
 var ready = false;
 /**********************\
@@ -22,6 +23,8 @@ socket.on("auth",function(result, message){
         console.error("Authentication Error: " + message)
     }else{
         console.log("Authentication Successful.")
+        socket.emit("data","driverstation.mode","teleop");
+        socket.emit("data","match.alliance",$("#alliance").val())
     }
 })
 
@@ -46,7 +49,7 @@ socket.on("data", function(path, value){
         }
         current[steps[0]] = value;
   }
-  $("#voltage").val(data.driverstation.batteryVoltage);
+  //$("#voltage").val(data.driverstation.batteryVoltage);
 })
 
 socket.on("err", function(errorText) {
@@ -62,64 +65,56 @@ socket.on("disconnect", function() {
  jQuery Listeners
 \****************/
 $("#enable").click(function(){
-  socket.emit("event","enable");
+  //socket.emit("event","enable");
+  socket.emit("data","driverstation.enabled",true)
 });
 $("#disable").click(function(){
-  socket.emit("event","disable");
+  socket.emit("data","driverstation.enabled",false)
 });
 $("#estop").click(function(){
-  socket.emit("event","estop");
+  socket.emit("data","driverstation.enabled",false)
+  socket.emit("data","driverstation.estopped",true)
 });
 $("#estopClear").click(function(){
-  socket.emit("event","estopClear");
+  socket.emit("data","driverstation.enabled",false)
+  socket.emit("data","driverstation.estopped",false)
 });
 
 $("#fms-connect").click(function(){
-    socket.emit("event","fmsconnect")
+    socket.emit("data","driverstation.fmsAttached",true)
 })
 $("#fms-disconnect").click(function(){
-    socket.emit("event","fmsdisconnect")
+    socket.emit("data","driverstation.fmsAttached",false)
 })
 
-$("#voltage").change(function() {
-	var voltage = parseFloat($(this).val());
-	socket.emit("data","driverstation.batteryVoltage",voltage);
-	/*if(voltage <= 9.5){
-		//TODO: add multi stage
-		
-		brownout warning (9.5v)
-		browning out (7.5v)
-		blackout warning (5.5)
-		blackout (robot disconnect)
-		
-	}else if(voltage <= 6.8){
-		socket.emit("data","driverstation.isBrowningOut",true)
-	}else{
-		socket.emit("data","driverstation.isBrowningOut",false)
-	}*/
-  if(voltage <= 5.5){
-    socket.emit("alert","blackoutwarning",true)
-    socket.emit("alert","brownout",false)
-    socket.emit("alert","brownoutwarning",false)
-  }else if(voltage <= 7.5){
-    socket.emit("alert","blackoutwarning",false)
-    socket.emit("alert","brownout",true)
-    socket.emit("alert","brownoutwarning",false)
-  }else if(voltage <= 9.5){
-    socket.emit("alert","blackoutwarning",false)
-    socket.emit("alert","brownout",false)
-    socket.emit("alert","brownoutwarning",true)
-  }else{
-    socket.emit("alert","blackoutwarning",false)
-    socket.emit("alert","brownout",false)
-    socket.emit("alert","brownoutwarning",false)
-  }
+$("#eventName").change(function(){
+  socket.emit("data","match.eventName",$(this).val())
 })
 
+$("#matchNum").change(function(){
+  socket.emit("data","match.number",parseFloat($(this).val()))
+})
+
+$("#replayNum").change(function() {
+  socket.emit("data","match.replay",parseFloat($(this).val()))
+})
+
+$("#matchType").change(function() {
+  socket.emit("data","match.type",$(this).val())
+})
+
+$("#gameMessage").on("input",function() {
+    socket.emit("data","match.gameMessage",$("#gameMessage").val())
+})
+
+
+$("#alliance").change(function(){
+  socket.emit("data","match.alliance",$(this).val())
+})
 
 function updater(){
 	if(ready){
-		
+		socket.emit("data","driverstation.batteryVoltage",parseFloat((parseFloat($("#voltage").val()) + (Math.random()*0.8)).toFixed(4)))
 	}
 }
-setInterval(function(){updater()},10)
+setInterval(function(){updater()},80)

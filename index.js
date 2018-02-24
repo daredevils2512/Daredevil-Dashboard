@@ -70,8 +70,18 @@ var genericData = function(){
 	\*************/
 	return {
 		"dashboard":{ // daredevil dashboard data
+			"robotConnected":false,
+			"robotHasConnected":false,
 			"alerts": { /* Change alert system to dynamically generate alerts at the top of the page. */
-		        "fmsestop":{
+				"robotlostconnection":{
+					active:false,
+					type:"warning"
+				},
+				"robotdisconnected":{
+					active:true,
+					type:"primary"
+				},
+				"fmsestop":{
 		        	active:false,
 		        	type:"danger"
 		        },
@@ -124,18 +134,18 @@ var genericData = function(){
 		"driverstation":{ //check frc::DriverStation wpilibc++
 			"enabled":false, // put example of type (boolean = true, number = 1, etc)
 			"estopped":false,
-			"mode":"teleop",
+			"mode":"none",
 			"dsAttached":false,
 			"fmsAttached":false,
-			"batteryVoltage":12.5
+			"batteryVoltage":0.0
 		},
 		"match": { //check frc::DriverStation wpilibc++
-			"eventName":"Daredevils",
-			"gameMessage":"RRR",
+			"eventName":"",
+			"gameMessage":"",
 			"type":"none",
 			"number":1,
 			"replay":0,
-			"alliance":"red",
+			"alliance":"none",
 			"dslocation":1,
 			"startTime":-1, // in millis
 		},
@@ -163,6 +173,13 @@ var genericData = function(){
 var savedData = {
 	// objects will consist of data
 	//key = startTime, val = array of datas
+}
+var replayDir = __dirname + "/replays";
+var replayFiles = fs.readdirSync(replayDir);
+for(var i = 0; i < replayFiles.length; i++){
+	var stripped = replayFiles[i].substring(0,replayFiles[i].length-5);
+	if(parseFloat(stripped) == NaN) continue;
+	savedData[stripped] = JSON.parse(fs.readFileSync(replayDir + "/" + replayFiles[i]));
 }
 var matchLog = [
 ];
@@ -276,11 +293,22 @@ function stopLogger(doNotSave){
 	//save and reset logs
 	savedData[initialDataPoint.recordingStart] = {initial:initialDataPoint,log:matchLog};
 	console.log("Saved match data to \"" + initialDataPoint.recordingStart + "\"")
+	saveLog(initialDataPoint.recordingStart);
 	io.emit("logList",getLogList());
 	//dataHandler("match.startTime",-1);
 	initialDataPoint = undefined;
 	matchLog=[];
 	
+}
+
+function saveLog(id){
+	fs.writeFile(replayDir + "/" + id + ".json",JSON.stringify(savedData[id],null,"    ",null),function(err){
+		if(err){
+			console.log("FILE SAVE ERR: " + err);
+		}else{
+			console.log("Saved: " + id + ".json")
+		}
+	})
 }
 
 function getLogList(){
@@ -303,6 +331,10 @@ io.on("connection", function(socket){
 			if(validLocalhost.indexOf(socket.handshake.address) > -1){
 				socket.emit("auth","success");
 				socket.role = "robot";
+				dataHandler("dashboard.robotConnected",true);
+				dataHandler("dashboard.alerts.robotdisconnected.active",false);
+				dataHandler("dashboard.alerts.robotlostconnection.active",false);
+				dataHandler("dashboard.robotHasConnected",true);
 				console.log("Robot authenticated.")
 			}else{
 				socket.emit("auth","fail","Robot can only be authenticated from localhost to the server.")
@@ -466,7 +498,27 @@ io.on("connection", function(socket){
 			console.warn("Robot attempted to fetch log list for some reason.")
 		}
 	})
+	socket.on("deleteLog",function(logId){
+		if(socket.role == "dashboard"){
+			if(savedData.hasOwnProperty(logId)){
+				delete savedData[logId];
+				socket.emit("success","deleted log " + logId);
+				socket.emit("logList",getLogList());
+			}else{
+				socket.emit("err","Invalid log starttime")
+				console.warn("Invalid log starttime fetch attempt")
+			}
+		}else{
+			socket.emit("err","Robots cannot fetch the log list.")
+			console.warn("Robot attempted to fetch log list for some reason.")
+		}
+	})
 	socket.on("disconnect", function(){
+		if(socket.role == "robot"){
+			dataHandler("dashboard.robotConnected",false);
+			dataHandler("dashboard.alerts.robotdisconnected.active",false);
+			dataHandler("dashboard.alerts.robotlostconnection.active",true);
+		}
 		console.log("Disconnected!")
 	})
 	socket.on("debug", function(command){
@@ -482,11 +534,20 @@ http.listen(5024, function() {
 	console.log("Listening on port 5024...")
 })
 
+var robotConnected = false;
+
+var robotHasConnected = false;
+
 var net = require("net");
 
 net.createServer( function(sock) {
 	console.log("Connection: " + sock.remoteAddress  + ":" + sock.remotePort);
-
+	robotConnected = true;
+	robotHasConnected = true;
+	dataHandler("dashboard.robotConnected",robotConnected);
+	dataHandler("dashboard.alerts.robotdisconnected.active",false);
+	dataHandler("dashboard.alerts.robotlostconnection.active",false);
+	dataHandler("dashboard.robotHasConnected",robotHasConnected);
 	sock.on('data', function(data){
 		var packets = data.toString().split(":2512:");
 		packets.splice(packets.length-1,packets.length);
@@ -509,6 +570,10 @@ net.createServer( function(sock) {
 
 	sock.on('close', function(data){
 		console.log("CLOSED: " + sock.remoteAddress + ":" + sock.remotePort);
+		robotConnected = false;
+		dataHandler("dashboard.robotConnected",robotConnected);
+		dataHandler("dashboard.alerts.robotdisconnected.active",false);
+		dataHandler("dashboard.alerts.robotlostconnection.active",true);
 	})
 }).listen(5055,"127.0.0.1")
 console.log("Listening on *:5055");

@@ -4,22 +4,22 @@ var _recording = false;
 function isRecording() {
     return _recording || data.driverstation.enabled;
 }
-function mtypeToReadable(type) {
+function mtypeToReadable(type, short) {
     switch(type){
         case "practice":
-        return "Practice";
+        return (short)?"Prac":"Practice";
 
         case "elimination":
-        return "Elimination";
+        return (short)?"Elim":"Elimination";
 
         case "qualification":
-        return "Qualification";
+        return (short)?"Qual":"Qualification";
 
         case "none":
-        return "Development Testing"
+        return (short)?"Dev":"Development";
 
         default:
-        return "Unknown Match Type";
+        return "????";
     }
 }
 
@@ -109,6 +109,7 @@ function resetCharts() {
 var dOSettings = genericLineChart();
 var dOChart = newChart($("[dash-graph-id=\"drivetrainOutput\"]")[0],dOSettings);
 dOChart.timeCap = 15;
+dOChart.data.datasets[0].borderWidth = 2;
 setInterval(function(){
     if(!ready) return;
     var combinedCurrentDraw = data.drivetrain.motorControllers.frontLeft.outputCurrent + 
@@ -141,7 +142,7 @@ function millisTimeStr(forceTime){
     if(oldData){
         current = data.recordingStart + ((data.recordingTimeOffset)?data.recordingTimeOffset:0) + (step * logSpeed);
     }
-    var modTime = (current - ((data.recordingStart)?data.recordingStart:((data.match.startTime)?data.match.startTime:0))) + ((data.recordingTimeOffset)?data.recordingTimeOffset:0);
+    var modTime = (current - ((data.match.startTime != -1)?data.match.startTime:((data.recordingStart)?data.recordingStart:0))) + ((data.match.startTime == -1 && data.recordingTimeOffset)?data.recordingTimeOffset:0);
     if(forceTime) modTime = forceTime;
     var millis = modTime % 1000;
 
@@ -163,6 +164,8 @@ function millisTimeStr(forceTime){
 
 
 var alertContents = {
+    "robotdisconnected":"Please wait for Robot Code to respond...",
+    "robotlostconnection":"Robot Code Connection Dropped! <div style=\"font-size:20px;display:block\">Robot Code possibly crashed.</div>",
     "fmsestop":"ROBOT FMS ESTOP <div style=\"font-size:20px;display:block\">Robot was Emergency Stopped during a match while connected to the FMS.",
     "dsoffline":"DRIVER STATION OFFLINE",
     "subsysfail":"SUBSYSTEM FAILURE",
@@ -215,7 +218,7 @@ randomizeQuote();
 
 function updateIndicators() {
     $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable(data.match.type));
-    $("#matchNumber")[0].innerHTML = (data.match.number > 0)?(("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+match.replayNumber+")":""))):"";
+    $("#matchNumber")[0].innerHTML = (data.match.number > 0)?(("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+data.match.replay+")":""))):"";
 
     $("#quote").hide();
     $("#matchHeader").show();
@@ -279,7 +282,7 @@ function updateIndicators() {
     }
 }
 function updateDashboard(){
-    if(ready){
+    if(ready && data.dashboard.robotConnected){
         if(Math.floor(Date.now()/500)%2===0 && isRecording()){
             $("link[rel='icon']").attr("href", "icon-active.png");
         }else{
@@ -377,7 +380,7 @@ socket.on("err", function(errorText) {
 var _recentData = false;
 
 function dataHandler(path, value,isSocket){
-    var current = (activeLog && isSocket)?oldData:data;
+    var current = (activeLog && isSocket)?origData:data;
     var steps = path.split(".");
     while(steps.length > 1){
         if(current.hasOwnProperty(steps[0])){
@@ -427,11 +430,57 @@ socket.on("disconnect", function() {
 	    enableDrop = true;
 	}
 });
-
+var origData =undefined;
 socket.on("log",function(dat){
+    if(!window.origData)
+        window.origData = JSON.parse(JSON.stringify(data))
+
     window.logData = dat.log;
     window.initialData = dat.initial;
     window.data = JSON.parse(JSON.stringify(window.initialData));
+
+
+    var dtOutputDatapointCount = {};
+    var dtOutputCuml = {};
+
+    var lowestBatteryVoltage = window.initialData.driverstation.batteryVoltage;
+
+    var highestCurrentDraw = 0;
+    var highestCurrentDrawID = "??";
+
+    for(var i = 0; i < logData.length; i++){
+        var frame = logData[i];
+        for(var z = 0; z < frame.length; z++){
+            var edit = frame[z];
+            if(edit[0] == "driverstation.batteryVoltage"){
+                if(edit[1] < lowestBatteryVoltage){
+                    lowestBatteryVoltage = edit[1];
+                }
+            }else if(edit[0].indexOf("drivetrain.motorControllers") > -1 && edit[0].indexOf("outputCurrent")){
+                var mcID = edit[0].split(".")[2];
+
+                if(edit[1] > highestCurrentDraw){
+                    highestCurrentDraw = edit[1];
+                    highestCurrentDrawID = mcID;
+                }
+                if(!dtOutputDatapointCount[mcID] || !dtOutputCuml[mcID]){
+                    dtOutputDatapointCount[mcID] = 0;
+                    dtOutputCuml[mcID] = 0;
+                }
+                dtOutputDatapointCount[mcID]++;
+                dtOutputCuml[mcID] += edit[1];
+            }
+        }
+    }
+    var dtAllAverage = 0;
+    for(var i in dtOutputDatapointCount){
+        dtAllAverage += dtOutputCuml[i] / dtOutputDatapointCount[i];
+    }
+    $("#replayAvgDrivetrainAmps").text((dtAllAverage).toFixed(4));
+    $("#replayHighestCurrentDraw").text(highestCurrentDraw);
+    $("#replayHighestCurrentDrawID").text(highestCurrentDrawID);
+    $("#lowestBatteryVoltage").text(lowestBatteryVoltage);
+
     updateAlerts();
     step = 0;
     playing = false;
@@ -445,11 +494,17 @@ socket.on("log",function(dat){
 
 socket.on("logList",function(logs){
     $("#matchLogs").html("");
+    var hasLogs = false;
     for(var i in logs){
+        hasLogs = true;
         var entry = logs[i];
         var error = '<span class="badge badge-danger">3 Errors</span>';
         var warn = '<span class="badge badge-warning">1 Warning</span>';
-        $("#matchLogs").append('<li class="nav-item"> <a id="' + i + '" class="nav-link replay-link" href="javascript:void(0)" onclick="socket.emit(\'log\',' + i +'); activeLog = \'' + i + '\'"><span data-feather="file-text"></span>' + mtypeToReadable(entry.type) + ((entry.number)?(' #' + entry.number + ((entry.replay > 0)?'(Replay ' + entry.replay + ')':'')):"") + '</a></li>')
+        var thisDat = new Date(parseFloat(i));
+        $("#matchLogs").append('<li class="nav-item"> <a id="' + i + '" title="' + thisDat.toLocaleDateString() + " " + thisDat.toLocaleTimeString() + '" class="nav-link replay-link" href="javascript:void(0)" onclick="socket.emit(\'log\',' + i +'); activeLog = \'' + i + '\'"><span data-feather="file-text" style="color:rgba(' + ((entry.alliance == "red")?'255,0,0':'0,0,255') +  ',0.5)"></span>' + ((entry.eventName.length > 0)?(entry.eventName + " (" + mtypeToReadable(entry.type,true) + ")"):mtypeToReadable(entry.type)) + ((entry.number)?(' #' + entry.number + ((entry.replay > 0)?' (R#' + entry.replay + ')':'')):"") + '</a></li>')
+    }
+    if(!hasLogs){
+        $("#matchLogs").append('<li class="nav-item"> <a class="nav-link replay-link" style="color:gray"><span data-feather="x-square"></span> No Log Data Found</a></li>')
     }
     feather.replace()
 })
@@ -484,7 +539,9 @@ function runLog(dontTimeout){
         
         if(!oldData){
             oldData = JSON.parse(JSON.stringify(data));
+            $("#replayStats").show();
             $("#exitReplay").show();
+            $("#deleteReplay").show();
             $("#replay-footer").show();
         }
         //data = logData[step];
@@ -512,15 +569,23 @@ function runLog(dontTimeout){
     updating = false;
 }
 function closeLog() {
-    data = JSON.parse(JSON.stringify(oldData));
+    data = JSON.parse(JSON.stringify(origData));
     oldData = undefined;
     activeLog = undefined;
     updateDashboard();
     updateAlerts();
     updateIndicators();
     $("#exitReplay").hide();
+    $("#replayStats").hide();
+    $("#deleteReplay").hide();
     $(".replay-link").css("backgroundColor","");
     $("#replay-footer").hide();
+}
+
+function deleteLog() {
+    var id = data.recordingStart;
+    socket.emit("deleteLog",id);
+    closeLog();
 }
 /** LOG REPLAY **/
 
