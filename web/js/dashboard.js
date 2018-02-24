@@ -114,8 +114,8 @@ setInterval(function(){
     if(!ready) return;
     var combinedCurrentDraw = data.drivetrain.motorControllers.frontLeft.outputCurrent + 
         data.drivetrain.motorControllers.frontRight.outputCurrent + 
-        data.drivetrain.motorControllers.backLeft.outputCurrent + 
-        data.drivetrain.motorControllers.backRight.outputCurrent;
+        data.drivetrain.motorControllers.rearLeft.outputCurrent + 
+        data.drivetrain.motorControllers.rearRight.outputCurrent;
     if(combinedCurrentDraw > 50){
         if(combinedCurrentDraw > 90){
             dOChart.data.datasets[0].backgroundColor="rgba(255,0,0,0.25)";

@@ -18,10 +18,10 @@ var fs = require('fs');
 var srx = function() {
 	return { // check talon lib
 		"id":0,
-		"alive":true,
+		"alive":false,
 		"controlMode":"Disabled",
 		"value":0.0,
-		"safetyEnabled":true,
+		"safetyEnabled":false,
 		"outputCurrent":0, //amps
 		"temperature":0,
 		"firmwareVersion":0, // versions are numbers i guess
@@ -43,12 +43,12 @@ var srx = function() {
 
 var encoder = function() {
 	return { // frc::Encoder
-		"aChannel":1,
-		"bChannel":2,
+		"aChannel":0,
+		"bChannel":0,
 		"count":0,
 		"rawValue":0,
 		"period":0,
-		"encodingScale":1, //multiplier int
+		"encodingScale":0, //multiplier int
 		"distancePerPulse":0,
 		"direction":false,
 		"distance":0,
@@ -58,11 +58,19 @@ var encoder = function() {
 }
 var doubleSolenoid = function() {
 	return { //frc::doublesolenoid
-		"forwardChannel":1,
-		"reverseChannel":2,
+		"forwardChannel":0,
+		"reverseChannel":0,
 		"value":"off"
 	}
 }
+
+var limitSwitch = function() {
+	return {
+		"channel":0,
+		"activated":false,
+	}
+}
+
 var matchLength = ((2/*minues*/*60)+30/*seconds*/)*1000; //conv to millis
 var genericData = function(){
 	/*************\
@@ -153,17 +161,29 @@ var genericData = function(){
 			"motorControllers": {
 				"frontLeft":srx(),
 				"frontRight":srx(),
-				"backLeft":srx(),
-				"backRight":srx()
+				"rearLeft":srx(),
+				"rearRight":srx()
 			},
 			"shifter":doubleSolenoid(),
 			"encoders":{
-				"frontLeft":encoder(),
-				"frontRight":encoder(),
-				"backLeft":encoder(),
-				"backRight":encoder()
+				"left":encoder(),
+				"right":encoder(),
 			}
 		},
+		"cube": {
+			"intake":{
+				"leftMotor": srx(),
+				"rightMotor": srx(),
+				"grabberSolenoid": doubleSolenoid(),
+				"cubeSwitch": limitSwitch()
+			},
+			"elevatorMotor":srx(),
+			"elevatorBottomSwitch":limitSwitch()
+		},
+		"climber":{
+			"leftWingMotor":srx(),
+			"rightWingMotor":srx()
+		}
 	}
 }
 
