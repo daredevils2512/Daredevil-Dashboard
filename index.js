@@ -175,6 +175,9 @@ var savedData = {
 	//key = startTime, val = array of datas
 }
 var replayDir = __dirname + "/replays";
+if(!fs.existsSync(replayDir)){
+	fs.mkdirSync(replayDir);
+}
 var replayFiles = fs.readdirSync(replayDir);
 for(var i = 0; i < replayFiles.length; i++){
 	var stripped = replayFiles[i].substring(0,replayFiles[i].length-5);
@@ -502,6 +505,13 @@ io.on("connection", function(socket){
 		if(socket.role == "dashboard"){
 			if(savedData.hasOwnProperty(logId)){
 				delete savedData[logId];
+				fs.unlink(replayDir + "/" + logId + ".json", function(err){
+					if(err){
+						console.log("Err removing " + logId + ".json: " + err);
+					}else{
+						console.log("Deleted " + logId  + ".json")
+					}
+				})
 				socket.emit("success","deleted log " + logId);
 				socket.emit("logList",getLogList());
 			}else{
@@ -523,7 +533,7 @@ io.on("connection", function(socket){
 	})
 	socket.on("debug", function(command){
 		if(command == "enable"){
-			data.driverstation.enabled = true;
+ 			data.driverstation.enabled = true;
 			data.match.startTime = Date.now();
 			io.emit("data","",data); 
 		}
