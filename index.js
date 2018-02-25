@@ -560,8 +560,8 @@ io.on("connection", function(socket){
 	})
 })
 
-http.listen(5024, function() {
-	console.log("Listening on port 5024...")
+http.listen(5801, function() {
+	console.log("Listening on port 5801...")
 })
 
 var robotConnected = false;

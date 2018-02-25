@@ -357,7 +357,7 @@ if(location.hasOwnProperty("search")){
         host = "localhost"
     }
 }
-var socket = io("http://" + host + ":5024"); 
+var socket = io("http://" + host + ":5801"); 
 var enableDrop = false;
 socket.on("connect",function(){
     enableDrop = false;
