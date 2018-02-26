@@ -38,9 +38,9 @@
                 <center>
                     <span id="quote">
                         <h3 id="quote-text" style="display:inline-block;padding: 0px;margin: 0px;">
-                            WHEN YOU HAVE COPD IT CAN BE HARD TO BREATHE
+                            
                         </h3>
-                        <i>- <span id="quote-source">grandpa wolf</span></i>
+                        <i><span id="quote-source"></span></i>
                     </span>
                     <span id="matchHeader" style="display: none">
 
@@ -146,12 +146,15 @@
                     <div id="dashboard">
                         <div class="row mb-3">
                             <div class="col-3">
+                                <div class="card mb-3">
+                                    <canvas id="fieldDrawing" style="border-radius:10px"></canvas>
+                                </div>
                                 <div class="card">
-                                    <canvas id="fieldDrawing" style="border-radius:20px"></canvas>
+                                    <canvas id="robotDiagram" style="border-radius: 10px;"></canvas>
                                 </div>
                             </div>
-                            <div class="col-4">
-                                <div class="card card-body-med">
+                            <div class="col-6">
+                                <div class="card card-body-med mb-3">
                                     <h3 class="text-center">DS Data</h3>
                                     <div class="card-body dsd" style="padding:0px">
                                         <span id="dsd-enabled" class="badge badge-danger">Disabled</span>
@@ -162,30 +165,56 @@
                                         <span id="dsd-isBrowningOut" class="badge badge-secondary">Browning Out</span>
                                     </div>
                                 </div>
+                                <div class="card card-body-med">
+                                    <b class="text-center">Drivetrain Current Draw</b>
+                                    <canvas dash-graph-id="drivetrainOutput" dash-graph="drivetrain.motorControllers.frontLeft.outputCurrent&drivetrain.motorControllers.frontRight.outputCurrent&drivetrain.motorControllers.rearLeft.outputCurrent&drivetrain.motorControllers.rearRight.outputCurrent" style="width:100%;height:250px"></canvas>
+                                </div>
                             </div>
-                            <div class="col-4">
+                            <div class="col-3">
                                 <div class="card card-body-med mb-3">
                                     <div class="card-body dsd" style="padding:0px">
-                                    	FL Output Current
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontLeft.outputCurrent">0.0</span>
-                                        Value
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontLeft.value">0.0</span><br>
+                                        <div class="text-center" style="font-weight: bold">Drivetrain</div>
+                                        <center>
+                                            <span style="font-family:consolas;">
+                                            	FL Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontLeft.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
 
 
-                                        FR Output Current
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontRight.outputCurrent">0.0</span>
-                                        Value
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontRight.value">0.0</span><br>
+                                                FR Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontRight.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
 
-                                        RL Output Current
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.outputCurrent">0.0</span>
-                                        Value
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
+                                                RL Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
 
-                                        RR Output Current
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.outputCurrent">0.0</span>
-                                        Value
-                                        <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
+                                                RR Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
+                                            </span>
+                                        </center>   
+
+                                        <div class="text-center" style="font-weight: bold">Elevator</div>
+
+                                        <div class="text-center" style="font-style:italic;">Intake</div>
+                                        <center>
+                                            <span style="font-family:consolas;">
+                                                L Current
+                                                <span class="badge badge-warning" dash-data="cube.intake.leftMotor.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="cube.intake.leftMotor.value">0.0</span><br>
+
+                                                R Current
+                                                <span class="badge badge-warning" dash-data="cube.intake.rightMotor.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="cube.intake.rightMotor.value">0.0</span><br>
+                                            </span>
+                                        </center>   
                                     </div>
                                 </div>
 
@@ -194,14 +223,11 @@
                         </div>
                         <div class="row mb-3">
                         	<div class="col-6">
-                            	<div class="card card-body-med">
-                                	<b class="text-center">Drivetrain Current Draw</b>
-                            		<canvas dash-graph-id="drivetrainOutput" dash-graph="drivetrain.motorControllers.frontLeft.outputCurrent&drivetrain.motorControllers.frontRight.outputCurrent&drivetrain.motorControllers.rearLeft.outputCurrent&drivetrain.motorControllers.rearRight.outputCurrent" style="width:100%;height:250px"></canvas>
-                            	</div>
+                            	
                             </div>
                         </div>
 
-                        <div id="replayStats">
+                        <div id="replayStats" style="display:none">
                             <h2>Replay Stats</h2>
                             <div class="row">
                                 <div class="table-responsive col-6">

@@ -11,7 +11,7 @@ var ready = false;
 \**********************/
 var host = "localhost" // robot debug should really be ran locally.
 
-var socket = io("http://" + host + ":5024"); 
+var socket = io("http://" + host + ":5801"); 
 
 socket.on("connect",function(){
     console.log("Connected. Sending Authentication request.")

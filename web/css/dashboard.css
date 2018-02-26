@@ -147,7 +147,7 @@ a.disabled {
    cursor: default;
 }
 
-#fieldDrawing {
+#fieldDrawing, #robotDiagram {
   width:100%;
 }
 

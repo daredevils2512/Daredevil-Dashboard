@@ -107,6 +107,8 @@ function resetCharts() {
 }
 
 var dOSettings = genericLineChart();
+dOSettings.options.scales.yAxes[0].ticks.beginAtZero = false;
+dOSettings.options.scales.yAxes[0].ticks.suggestedMax = 120;
 var dOChart = newChart($("[dash-graph-id=\"drivetrainOutput\"]")[0],dOSettings);
 dOChart.timeCap = 15;
 dOChart.data.datasets[0].borderWidth = 2;
@@ -204,14 +206,19 @@ var quotes = [
     ["We should use pixy cameras after 2017","Satan"],
     ["It's programming's fault.", "Electronics & Build Depts."],
     ["Told you so","Programming Dept."],
-    ["The pixy broke again, where's the calibration file?","Troy Martin"]
-
+    ["The pixy broke again, where's the calibration file?","Troy Martin"],
+    ["It'll take 15 minutes","Build Dept."],
+    ["Lemon Squeezers"],
+    ["They probably used 1 wood screw, don't climb on that","Cameron"],
+    ["Love, and sexual assault","Woodie Flowers"],
+    ["I lost my gracious professional units, help what do","Chief Delphi"],
+    ["Catch me if you can!","Kahl"]
 ]
 var lastQuoteUpdate = Date.now();
 function randomizeQuote(){
     var quote = quotes[Math.round(Math.random()*(quotes.length-1))];
     $("#quote-text")[0].innerHTML = ("\""+quote[0]+"\"");
-    $("#quote-source")[0].innerHTML = (quote[1]);
+    $("#quote-source")[0].innerHTML = (quote[1])?"- " +(quote[1]):"";
     lastQuoteUpdate = Date.now();
 }
 randomizeQuote();
@@ -220,8 +227,7 @@ function updateIndicators() {
     $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable(data.match.type));
     $("#matchNumber")[0].innerHTML = (data.match.number > 0)?(("#" + data.match.number + ((data.match.replay >= 1)?" (Replay #"+data.match.replay+")":""))):"";
 
-    $("#quote").hide();
-    $("#matchHeader").show();
+    
     if(data.driverstation.estopped){
         $("#dsd-enabled").addClass("badge-danger").removeClass("badge-success")[0].innerHTML = ("ESTOPPED");
     }else if(data.driverstation.enabled == true){
@@ -290,11 +296,19 @@ function updateDashboard(){
         }
         
 
-    
-        if(data.match.startTime > -1 || data.recordingStart){
-            $("#matchTime")[0].innerHTML = (millisTimeStr())
+        if(data.driverstation.estopped){
+            $("#quote-text")[0].innerHTML = ("\"Catch me if you ca-\"");
+            $("#quote-source")[0].innerHTML = "- Kahl";
+            $("#quote").show();
+            $("#matchHeader").hide();
         }else{
-            $("#matchTime")[0].innerHTML = ("00:00:00")
+            $("#quote").hide();
+            $("#matchHeader").show();
+            if(data.match.startTime > -1 || data.recordingStart){
+                $("#matchTime")[0].innerHTML = (millisTimeStr())
+            }else{
+                $("#matchTime")[0].innerHTML = ("00:00:00")
+            }
         }
         
     }else{
@@ -590,8 +604,10 @@ function deleteLog() {
 /** LOG REPLAY **/
 
 var fDE = document.getElementById("fieldDrawing");
+var rD = document.getElementById("robotDiagram");
 $(document).ready(function(){
     var procInstance = new Processing(fDE,fieldDrawing);
+    var rDProcInstance = new Processing(rD,robotDiagram);
 });
 function fieldDrawing(p){
     p.size(520,400);
@@ -603,15 +619,13 @@ function fieldDrawing(p){
         
         
         //p.text(p.frameCount,10,10)
-        if(!_recentData || p.frameCount == 0) return;
-        _recentData = false;
         p.resetMatrix();
         p.background(255);
         p.fill(0);
         p.pushMatrix();
             p.translate(p.width/2,p.height/2)
             
-            if(data.hasOwnProperty("match")){
+            if(ready && data.hasOwnProperty("match")){
 	            if(data.match.alliance == "blue"){
 	                p.scale(-1,1 );
 	            }else{
@@ -662,7 +676,7 @@ function fieldDrawing(p){
             }
             var red = p.color(255,0,0);
             var blue = p.color(0,0,255);
-            if(data.hasOwnProperty("match")){
+            if(ready && data.hasOwnProperty("match")){
 	            if(data.match.gameMessage){
 	                var dat = data.match.gameMessage.toLowerCase().split("");
 
@@ -700,14 +714,128 @@ function fieldDrawing(p){
             p.textAlign(p.CENTER,p.TOP);
             p.textSize(60);
             p.fill(0);
-            p.text((data.hasOwnProperty("match"))?data.match.alliance.toUpperCase():"NO ALLIANCE",p.width/2,10)
+            p.text((ready&&data.hasOwnProperty("match"))?data.match.alliance.toUpperCase():"NO ALLIANCE",p.width/2,10)
             p.textSize(30);
             p.textAlign(p.CENTER,p.BOTTOM);
-            p.text((data.hasOwnProperty("match"))?data.match.gameMessage:"NO GAME MESSAGE",p.width/2,p.height-25)
+            p.text((ready&&data.hasOwnProperty("match"))?data.match.gameMessage:"NO GAME MESSAGE",p.width/2,p.height-25)
             p.textSize(13);
             p.textAlign(p.LEFT,p.TOP)
 
 
+    }
+}
+
+function robotDiagram(p){
+    p.size(280,300);
+    p.background(255);
+    p.fLBadConnection = false;
+    p.fRBadConnection = false;
+    p.rLBadConnection = false;
+    p.rRBadConnection = false;
+    p.draw = function() {
+        if(!ready || !data.dashboard.robotConnected){
+            p.fLBadConnection = false;
+            p.fRBadConnection = false;
+            p.rLBadConnection = false;
+            p.rRBadConnection = false;
+        }
+        p.fill(255);
+        p.background(255);
+        p.stroke(0,0,0);
+        p.strokeWeight(3);
+        p.rect(p.width/2 - 150/2,p.height - 210,150,180);
+        p.rect(90,20,20,70);
+        p.rect(170,20,20,70);
+
+        p.fill(200)
+        p.rect(p.width/2-30,170,60,60);
+        
+
+        if(ready && (data.driverstation.enabled && Math.floor(p.frameCount/20) % 2 == 0 || !data.driverstation.enabled)){
+            p.stroke(255,158,0);
+            p.fill(255,118,0);
+        }else{
+            p.stroke(225,98,0);
+            p.fill(200,68,0);
+        }
+        p.ellipse(p.width/2+15,186,16,16);
+
+
+        /////////////////
+        //  Front Left //
+        /////////////////
+        if(ready){
+            if(!p.fLBadConnection && (data.drivetrain.motorControllers.frontLeft.alive && (data.drivetrain.motorControllers.rearLeft.value <= 0.1 || 
+                data.drivetrain.motorControllers.rearLeft.value > 0.1 && data.drivetrain.motorControllers.frontLeft.outputCurrent > 0.3))){
+                p.stroke(0,255,0);
+                p.fill(0,200,0);
+            }else{
+                p.stroke(255,0,0);
+                p.fill(200,0,0);
+                p.fLBadConnection = true;
+            }
+        }else{
+            p.stroke(200);
+            p.fill(150);
+        }
+        p.rect(75,160,25,15);
+
+        /////////////////
+        // Front Right //
+        /////////////////
+        if(ready){
+            if(!p.fRBadConnection && (data.drivetrain.motorControllers.frontRight.alive &&(data.drivetrain.motorControllers.rearRight.value <= 0.1 || 
+                data.drivetrain.motorControllers.rearRight.value > 0.1 && data.drivetrain.motorControllers.frontRight.outputCurrent > 0.3))){
+                p.stroke(0,255,0);
+                p.fill(0,200,0);
+            }else{
+                p.stroke(255,0,0);
+                p.fill(200,0,0);
+                p.fRBadConnection = true;
+            }
+        }else{
+            p.stroke(200);
+            p.fill(150);
+        }
+        p.rect(180,160,25,15);
+
+        /////////////////
+        //   Rear Left //
+        /////////////////
+        if(ready){
+            if(!p.rLBadConnection && (data.drivetrain.motorControllers.rearLeft.alive &&(data.drivetrain.motorControllers.rearLeft.value <= 0.1 || 
+                data.drivetrain.motorControllers.rearLeft.value > 0.1 && data.drivetrain.motorControllers.rearLeft.outputCurrent > 0.3))){
+                p.stroke(0,255,0);
+                p.fill(0,200,0);
+            }else{
+                p.stroke(255,0,0);
+                p.fill(200,0,0);
+                p.rLBadConnection = true;
+            }
+        }else{
+            p.stroke(200);
+            p.fill(150);
+        }
+        p.rect(75,200,25,15);
+
+        /////////////////
+        //  Rear Right //
+        /////////////////
+        if(ready){
+            if(!p.rRBadConnection && (data.drivetrain.motorControllers.rearRight.alive &&(data.drivetrain.motorControllers.rearRight.value <= 0.1 || 
+                data.drivetrain.motorControllers.rearRight.value > 0.1 && data.drivetrain.motorControllers.rearRight.outputCurrent > 0.3))){
+                p.stroke(0,255,0);
+                p.fill(0,200,0);
+            }else{
+                p.stroke(255,0,0);
+                p.fill(200,0,0);
+                p.rRBadConnection = true;
+            }
+        }else{
+            p.stroke(200);
+            p.fill(150);
+        }
+        p.rect(180,200,25,15);
     }
 }
 

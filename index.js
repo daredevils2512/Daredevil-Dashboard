@@ -248,6 +248,15 @@ function dataHandler(path,newValue){
 		socket.emit("err","Not allowed to set root data. >:(");
 		return;
 	}
+	if(path == "driverstation.enabled"){
+		if(data.driverstation.fmsAttached && data.driverstation.mode == "auto"){
+			if(data.match.startTime == -1){
+				dataHandler("match.startTime",1);
+				
+				startLogger();
+			}
+		}
+	}
 	if(path == "match.startTime"){
 		console.log("initalized start time")
 		if(newValue == 1){
@@ -297,6 +306,7 @@ function startLogger(manual){
 			&& !data.driverstation.enabled ) || 
 				data.driverstation.estopped ) && data.driverstation.fmsAttached && !manualRecording ){ // if match over OR estopped
 			stopLogger();
+			dataHandler("match.startTime",-1);// stop recording.
 		}
 	},logEntryDelay);
 }
