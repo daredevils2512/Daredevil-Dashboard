@@ -177,3 +177,9 @@ canvas {
   height:20px;
   margin-bottom:10px;
 }
+
+.limitSwitch {
+  font-size:17px;
+  padding-top:20px;
+  padding-bottom:20px;
+}

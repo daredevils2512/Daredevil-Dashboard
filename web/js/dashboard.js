@@ -286,6 +286,18 @@ function updateIndicators() {
         
         $(dats[i]).text(dat.toFixed(3));
     }
+
+    if(data.cube.elevatorBottomSwitch.activated){
+        $("#elevatorSwitch").removeClass("badge-danger").addClass("badge-success");
+    }else{
+        $("#elevatorSwitch").addClass("badge-danger").removeClass("badge-success");
+    }
+
+    if(data.cube.intake.cubeSwitch.activated){
+        $("#cubeSwitch").removeClass("badge-danger").addClass("badge-success");
+    }else{
+        $("#cubeSwitch").addClass("badge-danger").removeClass("badge-success");
+    }
 }
 function updateDashboard(){
     if(ready && data.dashboard.robotConnected){
@@ -750,6 +762,7 @@ function robotDiagram(p){
         p.fill(200)
         p.rect(p.width/2-30,170,60,60);
         
+        var talonthresh = 0.3
 
         if(ready && (data.driverstation.enabled && Math.floor(p.frameCount/20) % 2 == 0 || !data.driverstation.enabled)){
             p.stroke(255,158,0);
@@ -766,7 +779,7 @@ function robotDiagram(p){
         /////////////////
         if(ready){
             if(!p.fLBadConnection && (data.drivetrain.motorControllers.frontLeft.alive && (data.drivetrain.motorControllers.rearLeft.value <= 0.1 || 
-                data.drivetrain.motorControllers.rearLeft.value > 0.1 && data.drivetrain.motorControllers.frontLeft.outputCurrent > 0.3))){
+                data.drivetrain.motorControllers.rearLeft.value > talonthresh && data.drivetrain.motorControllers.frontLeft.outputCurrent > 0.3))){
                 p.stroke(0,255,0);
                 p.fill(0,200,0);
             }else{
@@ -785,7 +798,7 @@ function robotDiagram(p){
         /////////////////
         if(ready){
             if(!p.fRBadConnection && (data.drivetrain.motorControllers.frontRight.alive &&(data.drivetrain.motorControllers.rearRight.value <= 0.1 || 
-                data.drivetrain.motorControllers.rearRight.value > 0.1 && data.drivetrain.motorControllers.frontRight.outputCurrent > 0.3))){
+                data.drivetrain.motorControllers.rearRight.value > talonthresh && data.drivetrain.motorControllers.frontRight.outputCurrent > 0.3))){
                 p.stroke(0,255,0);
                 p.fill(0,200,0);
             }else{
@@ -804,7 +817,7 @@ function robotDiagram(p){
         /////////////////
         if(ready){
             if(!p.rLBadConnection && (data.drivetrain.motorControllers.rearLeft.alive &&(data.drivetrain.motorControllers.rearLeft.value <= 0.1 || 
-                data.drivetrain.motorControllers.rearLeft.value > 0.1 && data.drivetrain.motorControllers.rearLeft.outputCurrent > 0.3))){
+                data.drivetrain.motorControllers.rearLeft.value > talonthresh && data.drivetrain.motorControllers.rearLeft.outputCurrent > 0.3))){
                 p.stroke(0,255,0);
                 p.fill(0,200,0);
             }else{
@@ -823,7 +836,7 @@ function robotDiagram(p){
         /////////////////
         if(ready){
             if(!p.rRBadConnection && (data.drivetrain.motorControllers.rearRight.alive &&(data.drivetrain.motorControllers.rearRight.value <= 0.1 || 
-                data.drivetrain.motorControllers.rearRight.value > 0.1 && data.drivetrain.motorControllers.rearRight.outputCurrent > 0.3))){
+                data.drivetrain.motorControllers.rearRight.value > talonthresh && data.drivetrain.motorControllers.rearRight.outputCurrent > 0.3))){
                 p.stroke(0,255,0);
                 p.fill(0,200,0);
             }else{
