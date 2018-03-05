@@ -352,6 +352,52 @@ function getLogList(){
 	}
 	return list;
 }
+
+var autoFile = {
+	startPosition: "unknown",
+	doSwitch: "false",
+	doScale: "false"
+}
+
+function readAutoFile(){
+	fs.readFile("/home/lvuser/Autonomous.txt", "utf8", function(err, data){
+		if(err){
+			console.log("auto file read failure...");
+		}else{
+			var lines = data.split("\n");
+			for(var i = 0; i < lines.length; i++){
+				var line = lines[i].replace(/ /g,"");
+				var details = line.split(":");
+				switch(details[0]){ // id
+					case "startPosition":
+					autoFile.startPosition = details[1];
+					break;
+					case "doSwitch":
+					autoFile.doSwitch = details[1];
+					break;
+					case "doScale":
+					autoFile.doScale = details[1];
+				}
+			}
+			io.emit("autoData",autoFile);
+			//console.log("auto file successful read.")
+		}
+	});
+}
+
+
+
+function saveAutoFile() {
+	var msg = "startPosition: " + autoFile.startPosition + "\ndoSwitch: " + autoFile.doSwitch + "\ndoScale: " + autoFile.doScale + "\n";
+	fs.writeFile("/home/lvuser/Autonomous.txt",msg,function(err){
+		if(err){
+			console.log("Failed to save to auto file!");
+		}else{
+			console.log("Saved new auto data.");
+		}
+	})
+}
+
 io.on("connection", function(socket){
 	console.log("Connected!")
 	socket.role="unknown";
@@ -359,6 +405,7 @@ io.on("connection", function(socket){
 		if(type == "dashboard"){
 			socket.role="dashboard";
 			socket.emit("auth","success");
+			socket.emit("autoData",autoFile);
 		}else if(type == "robot"){
 			var validLocalhost = ["localhost","127.0.0.1","::1","::ffff:127.0.0.1"]
 			if(validLocalhost.indexOf(socket.handshake.address) > -1){
@@ -386,6 +433,18 @@ io.on("connection", function(socket){
 		}else{
 			socket.emit("err","Only the Robot can push data to the server.")
 			console.warn("Illegal Data Edit from " + socket.handshake.address + "!")
+		}
+	})
+	socket.on("autoData", function(data){
+		if(socket.role == "dashboard"){
+			autoFile = data;
+			saveAutoFile();
+			io.emit("autoData",autoFile);
+		}
+	})
+	socket.on("refreshAutoData",function(){
+		if(socket.role == "dashboard"){
+			readAutoFile();
 		}
 	})
 	socket.on("event", function(event){
@@ -571,6 +630,7 @@ io.on("connection", function(socket){
 })
 
 http.listen(5801, function() {
+	readAutoFile();
 	console.log("Listening on port 5801...")
 })
 
@@ -581,6 +641,7 @@ var robotHasConnected = false;
 var net = require("net");
 
 net.createServer( function(sock) {
+	readAutoFile();
 	console.log("Connection: " + sock.remoteAddress  + ":" + sock.remotePort);
 	robotConnected = true;
 	robotHasConnected = true;
@@ -609,6 +670,7 @@ net.createServer( function(sock) {
 	})
 
 	sock.on('close', function(data){
+		readAutoFile();
 		console.log("CLOSED: " + sock.remoteAddress + ":" + sock.remotePort);
 		robotConnected = false;
 		dataHandler("dashboard.robotConnected",robotConnected);

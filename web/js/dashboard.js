@@ -535,6 +535,58 @@ socket.on("logList",function(logs){
     feather.replace()
 })
 
+function updateAutoDetails() {
+    if(autoFile.startPosition == "left"){
+        $("#startleft").click();
+    }else if(autoFile.startPosition == "center"){
+        $("#startcenter").click();
+    }else if(autoFile.startPosition == "right"){
+        $("#startright").click()
+    }
+
+    if(autoFile.doSwitch == "true"){
+        $("#switchyes").click();
+    }else{
+        $("#switchno").click();
+    }
+
+    if(autoFile.doScale == "true"){
+        $("#scaleyes").click();
+    }else{
+        $("#scaleno").click();
+    }
+}
+
+function pushAutoToServer() {
+    if($("#startleft").parent().hasClass("active")){
+        autoFile.startPosition = "left";
+    }else if($("#startcenter").parent().hasClass("active")){
+        autoFile.startPosition = "center";
+    }else if($("#startright").parent().hasClass("active")){
+        autoFile.startPosition = "right";
+    }
+
+    if($("#switchyes").parent().hasClass("active")){
+        autoFile.doSwitch = "true";
+    }else if($("#switchno").parent().hasClass("active")){
+        autoFile.doSwitch = "false";
+    }
+
+    if($("#scaleyes").parent().hasClass("active")){
+        autoFile.doScale = "true";
+    }else if($("#scaleno").parent().hasClass("active")){
+        autoFile.doScale = "false";
+    }
+
+    socket.emit("autoData",autoFile);
+}
+
+var autoFile = {};
+socket.on("autoData",function (data){
+    autoFile = data;
+    updateAutoDetails();
+})
+
 /** LOG REPLAY **/
 var activeLog;
 var logSpeed = 25;
@@ -704,21 +756,27 @@ function fieldDrawing(p){
 	        }
             p.fill(0,0,0,100);
 
+            p.fill(p.red(colors.redSwitch.upper), p.green(colors.redSwitch.upper),p.blue(colors.redSwitch.upper),150);
             p.stroke(colors.redSwitch.upper); // red switch upper
             p.rect(110,118,40,40);
 
+            p.fill(p.red(colors.redSwitch.lower), p.green(colors.redSwitch.lower),p.blue(colors.redSwitch.lower),150);
             p.stroke(colors.redSwitch.lower); // red switch lower
             p.rect(110,198,40,40);
 
+            p.fill(p.red(colors.balance.upper), p.green(colors.balance.upper),p.blue(colors.balance.upper),150);
             p.stroke(colors.balance.upper); // balance upper
             p.rect(260,118,40,40);
 
+            p.fill(p.red(colors.balance.lower), p.green(colors.balance.lower),p.blue(colors.balance.lower),150);
             p.stroke(colors.balance.lower); // balance lower
             p.rect(260,198,40,40);
 
+            p.fill(p.red(colors.blueSwitch.upper), p.green(colors.blueSwitch.upper),p.blue(colors.blueSwitch.upper),150);
             p.stroke(colors.blueSwitch.upper); // blue switch upper
             p.rect(410,118,40,40);
 
+            p.fill(p.red(colors.blueSwitch.lower), p.green(colors.blueSwitch.lower),p.blue(colors.blueSwitch.lower),150);
             p.stroke(colors.blueSwitch.lower); // blue switch lower
             p.rect(410,198,40,40);
 
@@ -726,9 +784,21 @@ function fieldDrawing(p){
             p.textAlign(p.CENTER,p.TOP);
             p.textSize(60);
             p.fill(0);
+            if(ready && data.hasOwnProperty("match")){
+                if(data.match.alliance == "red"){
+                    p.fill(255,0,0);
+                }else if(data.match.alliance == "blue"){
+                    p.fill(0,0,255);
+                }else{
+                    p.fill(200,0,200);
+                }
+            }else{
+                p.fill(0,0,0);
+            }
             p.text((ready&&data.hasOwnProperty("match"))?data.match.alliance.toUpperCase():"NO ALLIANCE",p.width/2,10)
             p.textSize(30);
             p.textAlign(p.CENTER,p.BOTTOM);
+            p.fill(100,100,100);
             p.text((ready&&data.hasOwnProperty("match"))?data.match.gameMessage:"NO GAME MESSAGE",p.width/2,p.height-25)
             p.textSize(13);
             p.textAlign(p.LEFT,p.TOP)
