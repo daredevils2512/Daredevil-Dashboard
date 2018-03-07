@@ -198,7 +198,7 @@ function updateAlerts() {
     	}
     }
 }
-
+var notran = [];
 var quotes = [
     ["WHEN YOU HAVE COPD, IT CAN BE HARD TO BREATHE","Grandpa Wolf"],
     ["its water game guise", "Dean Kamen"],
@@ -210,13 +210,47 @@ var quotes = [
     ["It'll take 15 minutes","Build Dept."],
     ["Lemon Squeezers"],
     ["They probably used 1 wood screw, don't climb on that","Cameron"],
-    ["Love, and sexual assault","Woodie Flowers"],
+    //["Love, and sexual assault","Woodie Flowers"],
     ["I lost my gracious professional units, help what do","Chief Delphi"],
-    ["Catch me if you can!","Kahl"]
+    ["Catch me if you can!","Kahl"],
+    ["Staright","Jared"],
+    ["gas the irish","Lucas Finch"],
+    ["Rain smells like death","Noah"],
+    ["Corn is fruit","Linnea"],
+    ["Daddy Philip and the royal nut","Linnea"],
+    ["Thick chunky boi","Olivia"],
+    ["Better goodness","Doug"],
+    ["Don Ness is a daddy person","Olivia"],
+    ["I can't tell if I'm feeling homicidal or suicidal","Linnea"],
+    ["Ryan's a flight attendant","Sunna"],
+    ["Hey Sunna is your sister available","Marcus"],
+    ["We're going downtown now","Gary"],
+    ["You're laying down I can't see the TV","Noah"],
+    ["Your feet are small","Sunna"],
+    ["Robot sit on my face","Kahl"],
+    ["I swallowed the clip! Wait it came back up.","Cameron"],
+    ["My saw is super strong","Cameron"],
+    ["I love Perkins. They even have blood on the ceiling.","Olivia"],
+    ["I'm always thirsty","Koben"],
+    ["God I hate this team","Cameron"]
 ]
 var lastQuoteUpdate = Date.now();
+var lastQuote = -1;
 function randomizeQuote(){
-    var quote = quotes[Math.round(Math.random()*(quotes.length-1))];
+    if(notran.length == 0){
+        for(var i = 0; i < quotes.length; i++){
+            notran.push(i);
+        }
+    }
+    var qindex = -1;
+    var selec;
+    while(qindex == -1 || qindex == lastQuote){
+        selec = Math.round(Math.random()*(notran.length-1));
+        qindex = notran[selec];
+    }
+    notran.splice(selec,1);
+    lastQuote = qindex;
+    var quote = quotes[qindex];
     $("#quote-text")[0].innerHTML = ("\""+quote[0]+"\"");
     $("#quote-source")[0].innerHTML = (quote[1])?"- " +(quote[1]):"";
     lastQuoteUpdate = Date.now();
