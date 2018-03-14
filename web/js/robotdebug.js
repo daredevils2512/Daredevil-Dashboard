@@ -117,4 +117,4 @@ function updater(){
 		socket.emit("data","driverstation.batteryVoltage",parseFloat((parseFloat($("#voltage").val()) + (Math.random()*0.8)).toFixed(4)))
 	}
 }
-setInterval(function(){updater()},80)
+setInterval(function(){updater()},50)

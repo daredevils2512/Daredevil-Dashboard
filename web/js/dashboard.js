@@ -69,6 +69,17 @@ var genericLineChart = function() {
     };
 }
 
+function switchPage(id){
+    $(".dashpage").hide();
+    var pages = $(".dashpage");
+    for(var i = 0; i < pages.length; i++){
+        $("#" + pages[i].id + "-tab").removeClass("active");
+    }
+    $("#" + id).show();
+    $("#" + id + "-tab").addClass("active")
+}
+
+
 
 var charts = [];
 
@@ -214,29 +225,32 @@ var quotes = [
     ["I lost my gracious professional units, help what do","Chief Delphi"],
     ["Catch me if you can!","Kahl"],
     ["Staright","Jared"],
-    ["gas the irish","Lucas Finch"],
+    //["gas the irish","Lucas Finch"],
     ["Rain smells like death","Noah"],
     ["Corn is fruit","Linnea"],
     ["Daddy Philip and the royal nut","Linnea"],
     ["Thick chunky boi","Olivia"],
     ["Better goodness","Doug"],
-    ["Don Ness is a daddy person","Olivia"],
-    ["I can't tell if I'm feeling homicidal or suicidal","Linnea"],
+    //["Don Ness is a daddy person","Olivia"],
+    //["I can't tell if I'm feeling homicidal or suicidal","Linnea"],
     ["Ryan's a flight attendant","Sunna"],
     ["Hey Sunna is your sister available","Marcus"],
     ["We're going downtown now","Gary"],
     ["You're laying down I can't see the TV","Noah"],
     ["Your feet are small","Sunna"],
-    ["Robot sit on my face","Kahl"],
+    //["Robot sit on my face","Kahl"],
     ["I swallowed the clip! Wait it came back up.","Cameron"],
     ["My saw is super strong","Cameron"],
-    ["I love Perkins. They even have blood on the ceiling.","Olivia"],
-    ["I'm always thirsty","Koben"],
-    ["God I hate this team","Cameron"]
+    //["I love Perkins. They even have blood on the ceiling.","Olivia"],
+    //["I'm always thirsty","Koben"],
+    //["God I hate this team","Cameron"]
 ]
 var lastQuoteUpdate = Date.now();
 var lastQuote = -1;
 function randomizeQuote(){
+    if(quotes.length == 0){
+        return;
+    }
     if(notran.length == 0){
         for(var i = 0; i < quotes.length; i++){
             notran.push(i);
@@ -255,7 +269,6 @@ function randomizeQuote(){
     $("#quote-source")[0].innerHTML = (quote[1])?"- " +(quote[1]):"";
     lastQuoteUpdate = Date.now();
 }
-randomizeQuote();
 
 function updateIndicators() {
     $("#matchType")[0].innerHTML = (data.match.eventName + " " + mtypeToReadable(data.match.type));
@@ -415,8 +428,14 @@ var host = "10.25.12.2"
 if(location.hasOwnProperty("search")){
     if(location.search.toLowerCase().substring(1) == "testing"){
         host = "localhost"
+    }else if(location.search.toLowerCase().substring(1) == "usb"){
+        host = "172.22.11.2"
+    }else if(location.search.toLowerCase().substring(1) == "nq"){
+        quotes = [];
+        host = "localhost";
     }
 }
+randomizeQuote();
 var socket = io("http://" + host + ":5801"); 
 var enableDrop = false;
 socket.on("connect",function(){

@@ -57,14 +57,14 @@
                 <nav class="col-lg-2 col-md-3 d-none d-md-block bg-light sidebar">
                     <div class="sidebar-sticky">
                         <ul class="nav flex-column">
-                            <li class="nav-item"> <a class="nav-link active" href="#">
+                            <li class="nav-item"> <a class="nav-link active" href="javascript:void(0)" id="dashboard-tab" onclick="switchPage('dashboard');">
                                 <span data-feather="home"></span>
                                 Match Dashboard
                                 </a> 
                             </li>
-                            <li class="nav-item"> <a class="nav-link" href="#">
+                            <li class="nav-item"> <a class="nav-link" href="javascript:void(0)" id="diagnostics-tab" onclick="switchPage('diagnostics')">
                                 <span data-feather="bar-chart-2"></span>
-                                All Live Data
+                                Diagnostics
                                 </a> 
                             </li>
                             <li class="nav-item"> <a class="nav-link" href="javascript:void(0)" data-toggle="modal" data-target="#autoSelection">
@@ -144,7 +144,7 @@
                         </div>
                         <div class="col-2"></div>
                     </div>
-                    <div id="dashboard">
+                    <div class="dashpage" id="dashboard">
                         <div class="row mb-3">
                             <div class="col-3">
                                 <div class="card mb-3">
@@ -170,52 +170,7 @@
                                     <b class="text-center">Drivetrain Current Draw</b>
                                     <canvas dash-graph-id="drivetrainOutput" dash-graph="drivetrain.motorControllers.frontLeft.outputCurrent&drivetrain.motorControllers.frontRight.outputCurrent&drivetrain.motorControllers.rearLeft.outputCurrent&drivetrain.motorControllers.rearRight.outputCurrent" style="width:100%;height:250px"></canvas>
                                 </div>
-                                <div class="card card-body-med mb-3" style="display:none">
-                                    <div class="card-body dsd" style="padding:0px">
-                                        <div class="text-center" style="font-weight: bold">Drivetrain</div>
-                                        <center>
-                                            <span style="font-family:consolas;">
-                                                FL Current
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontLeft.outputCurrent">0.0</span>
-                                                Value
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
-
-
-                                                FR Current
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontRight.outputCurrent">0.0</span>
-                                                Value
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
-
-                                                RL Current
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.outputCurrent">0.0</span>
-                                                Value
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
-
-                                                RR Current
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.outputCurrent">0.0</span>
-                                                Value
-                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
-                                            </span>
-                                        </center>   
-
-                                        <div class="text-center" style="font-weight: bold">Elevator</div>
-
-                                        <div class="text-center" style="font-style:italic;">Intake</div>
-                                        <center>
-                                            <span style="font-family:consolas;">
-                                                L Current
-                                                <span class="badge badge-warning" dash-data="cube.intake.leftMotor.outputCurrent">0.0</span>
-                                                Value
-                                                <span class="badge badge-warning" dash-data="cube.intake.leftMotor.value">0.0</span><br>
-
-                                                R Current
-                                                <span class="badge badge-warning" dash-data="cube.intake.rightMotor.outputCurrent">0.0</span>
-                                                Value
-                                                <span class="badge badge-warning" dash-data="cube.intake.rightMotor.value">0.0</span><br>
-                                            </span>
-                                        </center>   
-                                    </div>
-                                </div>
+                                
                             </div>
                             <div class="col-5">
                                 <div class="card card-body-med mb-3">
@@ -224,6 +179,10 @@
                                         var camele = document.getElementById("robocam");
                                         var camsrc = camele.src;
                                         setInterval(function(){
+                                        	if(host == "localhost"){
+                                        		camele.src = "staticcam.png"
+                                        		return;
+                                        	}
                                             camele.src=camsrc + "&t=" + Date.now(); 
                                         },1000);
                                     </script>
@@ -280,6 +239,59 @@
                         </div>
 
                     </div> <!-- Dashboard Page -->
+
+                    <div class="dashpage" id="diagnostics" style="display:none">
+                    	<div class="row">
+                    		<div class="col-4">
+                    			<div class="card card-body-med mb-3">
+                                    <div class="card-body dsd" style="padding:0px">
+                                        <div class="text-center" style="font-weight: bold">Drivetrain</div>
+                                        <center>
+                                            <span style="font-family:consolas;">
+                                                FL Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontLeft.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
+
+
+                                                FR Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.frontRight.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
+
+                                                RL Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearLeft.value">0.0</span><br>
+
+                                                RR Current
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="drivetrain.motorControllers.rearRight.value">0.0</span><br>
+                                            </span>
+                                        </center>   
+
+                                        <div class="text-center" style="font-weight: bold">Elevator</div>
+
+                                        <div class="text-center" style="font-style:italic;">Intake</div>
+                                        <center>
+                                            <span style="font-family:consolas;">
+                                                L Current
+                                                <span class="badge badge-warning" dash-data="cube.intake.leftMotor.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="cube.intake.leftMotor.value">0.0</span><br>
+
+                                                R Current
+                                                <span class="badge badge-warning" dash-data="cube.intake.rightMotor.outputCurrent">0.0</span>
+                                                Value
+                                                <span class="badge badge-warning" dash-data="cube.intake.rightMotor.value">0.0</span><br>
+                                            </span>
+                                        </center>   
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- Diagnostic Page -->
 
                 </main>
 

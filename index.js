@@ -1,6 +1,20 @@
 var http = require('http').Server();
 var io = require("socket.io")(http);
 var fs = require('fs');
+var util = require('util');
+
+var log_file = fs.createWriteStream(__dirname + "/debug" + Date.now() + ".log", {flags:'w'});
+var log_stdout = process.stdout;
+
+console.log = function(d){
+	log_file.write(util.format("[INFO] " + d) + '\n');
+	log_stdout.write(util.format("[INFO] " + d) + '\n');
+}
+
+console.warn = function(d){
+	log_file.write(util.format("[WARN] " + d) + '\n');
+	log_stdout.write(util.format("[WARN] " + d) + '\n');
+}
 
 /*Object.defineProperty(Object.prototype, 'copy', {
   value: function(){
@@ -226,6 +240,7 @@ function saveData(data,filepath){
 
 	})
 }
+
 function sendRobotError(err){
 	for(var i in io.sockets.sockets){
 		var socket = io.sockets.sockets[i];
@@ -249,7 +264,7 @@ function dataHandler(path,newValue){
 		return;
 	}
 	if(path == "driverstation.enabled"){
-		if(data.driverstation.fmsAttached && data.driverstation.mode == "auto"){
+		if(data.driverstation.fmsAttached && (data.driverstation.mode == "auto" || data.driverstation.mode == "practice")){
 			if(data.match.startTime == -1){
 				dataHandler("match.startTime",1);
 				
@@ -262,6 +277,26 @@ function dataHandler(path,newValue){
 		if(newValue == 1){
 			newValue = Date.now();
 		}
+	}
+	if(path == "driverstation.batteryVoltage"){
+		if(newValue <= 5.5){
+			dataHandler("dashboard.alerts.blackoutwarning.active",true)
+			dataHandler("dashboard.alerts.brownout.active",false)
+			dataHandler("dashboard.alerts.brownoutwarning.active",false)
+		}else if(newValue <= 7.5){
+			dataHandler("dashboard.alerts.blackoutwarning.active",false)
+			dataHandler("dashboard.alerts.brownout.active",true)
+			dataHandler("dashboard.alerts.brownoutwarning.active",false)
+		}else if(newValue <= 9.5){
+			dataHandler("dashboard.alerts.blackoutwarning.active",false)
+			dataHandler("dashboard.alerts.brownout.active",false)
+			dataHandler("dashboard.alerts.brownoutwarning.active",true)
+		}else{	 
+			dataHandler("dashboard.alerts.blackoutwarning.active",false)
+			dataHandler("dashboard.alerts.brownout.active",false)
+			dataHandler("dashboard.alerts.brownoutwarning.active",false)
+		}
+
 	}
 	var current = data;
 	var steps = path.split(".");
@@ -362,7 +397,7 @@ var autoFile = {
 function readAutoFile(){
 	fs.readFile("/home/lvuser/Autonomous.txt", "utf8", function(err, data){
 		if(err){
-			console.log("auto file read failure...");
+			console.warn("auto file read failure...");
 		}else{
 			var lines = data.split("\n");
 			for(var i = 0; i < lines.length; i++){
@@ -391,7 +426,7 @@ function saveAutoFile() {
 	var msg = "startPosition: " + autoFile.startPosition + "\ndoSwitch: " + autoFile.doSwitch + "\ndoScale: " + autoFile.doScale + "\n";
 	fs.writeFile("/home/lvuser/Autonomous.txt",msg,function(err){
 		if(err){
-			console.log("Failed to save to auto file!");
+			console.warn("Failed to save to auto file!");
 		}else{
 			console.log("Saved new auto data.");
 		}

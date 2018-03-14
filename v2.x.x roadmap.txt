@@ -1,0 +1,18 @@
+v2.x.x outline
+
+nodejs server
+    - ambiguous as to the config of the robot
+    - accepts robot code data, rebroadcasts in dashboard format
+    - no longer has templates (currently in v1.x)
+
+robot code
+    - defines config of robot
+    - ability to create on-the-fly data (subsystems...)
+    - blind to state of nodejs server besides refresh requests
+        - resend robot code format
+
+client (dashboard)
+    - create graphs, data indicators, etc programatically
+    - save in-progress logs on client in case of power loss
+        - "blackbox" functionality
+    
