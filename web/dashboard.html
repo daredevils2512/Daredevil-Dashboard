@@ -145,67 +145,24 @@
                         <div class="col-2"></div>
                     </div>
                     <div class="dashpage" id="dashboard">
-                        <div class="row mb-3">
-                            <div class="col-3">
-                                <div class="card mb-3">
-                                    <canvas id="fieldDrawing" style="border-radius:10px"></canvas>
-                                </div>
-                                <div class="card">
-                                    <canvas id="robotDiagram" style="border-radius: 10px;"></canvas>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="card card-body-med mb-3">
-                                    <div class="card-body dsd text-center" style="padding:0px">
-                                        <span id="dsd-enabled" class="badge badge-danger">Disabled</span>
-                                        <span id="dsd-mode" class="badge badge-secondary">TeleOp</span>
-                                        <span id="dsd-dsAttached" class="badge badge-secondary">DS Attached</span>
-                                        <span id="dsd-fmsAttached" class="badge badge-secondary">FMS Attached</span>
-                                        <span id="dsd-batteryVoltage" class="badge badge-warning">0.0</span>
-                                        <span id="dsd-isBrowningOut" class="badge badge-secondary">Browning Out</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="card card-body-med mb-3">
-                                    <b class="text-center">Drivetrain Current Draw</b>
-                                    <canvas dash-graph-id="drivetrainOutput" dash-graph="drivetrain.motorControllers.frontLeft.outputCurrent&drivetrain.motorControllers.frontRight.outputCurrent&drivetrain.motorControllers.rearLeft.outputCurrent&drivetrain.motorControllers.rearRight.outputCurrent" style="width:100%;height:250px"></canvas>
-                                </div>
-                                
-                            </div>
-                            <div class="col-5">
-                                <div class="card card-body-med mb-3">
-                                    <img id="robocam" style="width:100%" src="http://10.25.12.30/goform/stream?cmd=get&channel=0"/>
-                                    <script>
-                                        var camele = document.getElementById("robocam");
-                                        var camsrc = camele.src;
-                                        setInterval(function(){
-                                        	if(host == "localhost"){
-                                        		camele.src = "staticcam.png"
-                                        		return;
-                                        	}
-                                            camele.src=camsrc + "&t=" + Date.now(); 
-                                        },1000);
-                                    </script>
-                                </div>
-                                <div class="card card-body-med mb-3">
-                                    <div class="row ml-0 mr-0">
-                                        <div class="col-6" style="line-height:1">
-                                            <div id="cubeSwitch" class="limitSwitch badge badge-danger w-100">Cube Intake</div>
-                                        </div>
-                                        <div class="col-6" style="line-height: 1">
-                                            <div id="elevatorSwitch" class="limitSwitch badge badge-danger w-100">Elevator Bottom</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-
-                            </div>
-
-                        </div>
-                        <div class="row mb-3">
-                        	<div class="col-6">
-                            	
-                            </div>
+                    	<div class="row">
+                    		<div class="col-2">&nbsp;</div>
+                    		<div class="col-8">
+	                        	<div class="card card-body-med mb-3">
+	                                <img id="robocam" style="width:100%" src="http://10.25.12.30/goform/stream?cmd=get&channel=0"/>
+	                                <script>
+	                                    var camele = document.getElementById("robocam");
+	                                    var camsrc = camele.src;
+	                                    setInterval(function(){
+	                                    	if(host == "localhost"){
+	                                    		camele.src = "staticcam.png"
+	                                    		return;
+	                                    	}
+	                                        camele.src=camsrc + "&t=" + Date.now(); 
+	                                    },1000);
+	                                </script>
+	                            </div>
+	                        </div>
                         </div>
 
                         <div id="replayStats" style="display:none">
@@ -241,9 +198,46 @@
                     </div> <!-- Dashboard Page -->
 
                     <div class="dashpage" id="diagnostics" style="display:none">
-                    	<div class="row">
-                    		<div class="col-4">
-                    			<div class="card card-body-med mb-3">
+                    	<div class="row mb-3">
+                            <div class="col-3">
+                                <div class="card mb-3">
+                                    <canvas id="fieldDrawing" style="border-radius:10px"></canvas>
+                                </div>
+                                <div class="card">
+                                    <canvas id="robotDiagram" style="border-radius: 10px;"></canvas>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="card card-body-med mb-3">
+                                    <div class="card-body dsd text-center" style="padding:0px">
+                                        <span id="dsd-enabled" class="badge badge-danger">Disabled</span>
+                                        <span id="dsd-mode" class="badge badge-secondary">TeleOp</span>
+                                        <span id="dsd-dsAttached" class="badge badge-secondary">DS Attached</span>
+                                        <span id="dsd-fmsAttached" class="badge badge-secondary">FMS Attached</span>
+                                        <span id="dsd-batteryVoltage" class="badge badge-warning">0.0</span>
+                                        <span id="dsd-isBrowningOut" class="badge badge-secondary">Browning Out</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card card-body-med mb-3">
+                                    <b class="text-center">Drivetrain Current Draw</b>
+                                    <canvas dash-graph-id="drivetrainOutput" dash-graph="drivetrain.motorControllers.frontLeft.outputCurrent&drivetrain.motorControllers.frontRight.outputCurrent&drivetrain.motorControllers.rearLeft.outputCurrent&drivetrain.motorControllers.rearRight.outputCurrent" style="width:100%;height:250px"></canvas>
+                                </div>
+                                
+                            </div>
+                            <div class="col-5">
+                                
+                                <div class="card card-body-med mb-3">
+                                    <div class="row ml-0 mr-0">
+                                        <div class="col-6" style="line-height:1">
+                                            <div id="cubeSwitch" class="limitSwitch badge badge-danger w-100">Cube Intake</div>
+                                        </div>
+                                        <div class="col-6" style="line-height: 1">
+                                            <div id="elevatorSwitch" class="limitSwitch badge badge-danger w-100">Elevator Bottom</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card card-body-med mb-3">
                                     <div class="card-body dsd" style="padding:0px">
                                         <div class="text-center" style="font-weight: bold">Drivetrain</div>
                                         <center>
@@ -289,6 +283,14 @@
                                         </center>   
                                     </div>
                                 </div>
+                                
+
+                            </div>
+
+                        </div>
+                    	<div class="row">
+                    		<div class="col-4">
+                    			
                             </div>
                         </div>
                     </div> <!-- Diagnostic Page -->
