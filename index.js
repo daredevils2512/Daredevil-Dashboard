@@ -674,7 +674,9 @@ var robotConnected = false;
 var robotHasConnected = false;
 
 var net = require("net");
-
+try{
+	fs.unlinkSync("/home/lvuser/pipe");
+}catch(e){}
 net.createServer( function(sock) {
 	readAutoFile();
 	console.log("Connection: " + sock.remoteAddress  + ":" + sock.remotePort);
@@ -712,5 +714,5 @@ net.createServer( function(sock) {
 		dataHandler("dashboard.alerts.robotdisconnected.active",false);
 		dataHandler("dashboard.alerts.robotlostconnection.active",true);
 	})
-}).listen(5055,"127.0.0.1")
-console.log("Listening on *:5055");
+}).listen("/home/lvuser/pipe");
+console.log("Robot pipe is now listening.");
